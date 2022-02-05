@@ -1,1 +1,3 @@
-/dist/
+/DawnEngineClient/dist/
+/DawnEngineServer/dist/
+/DawnEngineClient/engine.config
