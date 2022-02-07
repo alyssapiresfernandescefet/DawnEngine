@@ -1,12 +1,11 @@
 package com.dawnengine.network;
 
 import com.dawnengine.core.Settings;
+import com.dawnengine.utils.JSON;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.json.JSONObject;
 
 public class Client extends Listener {
@@ -14,7 +13,7 @@ public class Client extends Listener {
     private static Client client;
     private com.esotericsoftware.kryonet.Client socket;
 
-    private Client() throws IOException {
+    private Client() {
         socket = new com.esotericsoftware.kryonet.Client();
         socket.addListener(this);
         socket.start();
@@ -37,10 +36,10 @@ public class Client extends Listener {
 
     @Override
     public void received(Connection connection, Object object) {
-        if (object instanceof String) {
-            JSONObject obj = new JSONObject(object.toString());
-            NetworkContext ctx = new NetworkContext(connection, obj);
-            ServerNetworkPackets.get(obj.getInt("code")).event.run(ctx);
+        if (object instanceof String str) {
+            var obj = new JSONObject(str);
+            var ctx = new NetworkContext(connection, obj);
+            ServerNetworkPackets.get(obj.getInt("code")).event.invoke(ctx);
         }
     }
 
@@ -60,12 +59,18 @@ public class Client extends Listener {
 
     public static Client getClient() {
         if (client == null) {
-            try {
-                client = new Client();
-            } catch (IOException ex) {
-                Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            client = new Client();
         }
         return client;
+    }
+
+    public static String createPacket(ClientNetworkPackets packet,
+            JSON... data) {
+        var json = new JSONObject();
+        json.put("code", packet.code);
+        for (JSON dat : data) {
+            json.put(dat.key(), dat.value());
+        }
+        return json.toString();
     }
 }

@@ -33,19 +33,18 @@ public class Settings {
     private static void load() {
         try {
             if (!configFile.exists()) {
-                BufferedWriter out = new BufferedWriter(new FileWriter(configFile));
+                var out = new BufferedWriter(new FileWriter(configFile));
                 out.write(defaultConfigs);
                 out.close();
                 load();
                 return;
             }
-            FileInputStream in = new FileInputStream(configFile);
+            var in = new FileInputStream(configFile);
             props.load(in);
             in.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     public static String getProperty(String key) {
@@ -61,7 +60,7 @@ public class Settings {
         }
         props.setProperty(key, value);
         try {
-            BufferedWriter out = new BufferedWriter(new FileWriter(configFile));
+            var out = new BufferedWriter(new FileWriter(configFile));
             props.store(out, null);
         } catch (IOException ex) {
             Logger.getLogger(Settings.class.getName()).log(Level.SEVERE, null, ex);

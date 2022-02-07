@@ -1,16 +1,14 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package com.dawnengine.core;
 
-/**
- *
- * @author alyss
- */
+import com.dawnengine.network.Client;
+import javax.swing.JOptionPane;
+
 public class GameFrame extends javax.swing.JFrame {
 
-    public GameFrame() {
+    private final int playerID;
+
+    public GameFrame(int playerID) {
+        this.playerID = playerID;
         initComponents();
     }
 
@@ -18,7 +16,12 @@ public class GameFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -33,6 +36,16 @@ public class GameFrame extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        int opt = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to exit?", "Exit?", JOptionPane.YES_NO_OPTION);
+        if (opt == JOptionPane.NO_OPTION) {
+            return;
+        }
+        dispose();
+        Client.getClient().closeConnection();
+    }//GEN-LAST:event_formWindowClosing
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
