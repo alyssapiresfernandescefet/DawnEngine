@@ -5,8 +5,6 @@
         <group>
             <file>file:/C:/Users/alyss/Documents/NetBeansProjects/DawnEngineServer/src/com/dawnengine/network/ServerNetworkEvents.java</file>
         </group>
-        <group name="DawnEngine">
-            <file>file:/C:/Users/alyss/Documents/NetBeansProjects/DawnEngine/DawnEngineServer/src/com/dawnengine/core/ServerFrame.java</file>
-        </group>
+        <group name="DawnEngine"/>
     </open-files>
 </project-private>

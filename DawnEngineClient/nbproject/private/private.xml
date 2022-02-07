@@ -7,8 +7,9 @@
             <file>file:/C:/Users/alyss/Documents/NetBeansProjects/DawnEngineClient/src/com/dawnengine/network/ClientNetworkEvents.java</file>
         </group>
         <group name="DawnEngine">
-            <file>file:/C:/Users/alyss/Documents/NetBeansProjects/DawnEngine/DawnEngineClient/src/com/dawnengine/core/MainFrame.java</file>
-            <file>file:/C:/Users/alyss/Documents/NetBeansProjects/DawnEngine/DawnEngineClient/src/com/dawnengine/game/GameCanvas.java</file>
+            <file>file:/C:/Users/alyss/Documents/NetBeansProjects/DawnEngine/DawnEngineClient/src/com/dawnengine/game/Input.java</file>
+            <file>file:/C:/Users/alyss/Documents/NetBeansProjects/DawnEngine/DawnEngineClient/src/com/dawnengine/game/Game.java</file>
+            <file>file:/C:/Users/alyss/Documents/NetBeansProjects/DawnEngine/DawnEngineClient/src/com/dawnengine/core/GameFrame.java</file>
         </group>
     </open-files>
 </project-private>
