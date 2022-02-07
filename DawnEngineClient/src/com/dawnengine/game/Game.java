@@ -2,16 +2,21 @@ package com.dawnengine.game;
 
 import com.dawnengine.graphics.Camera;
 import java.awt.Canvas;
-import java.awt.Color;
+import java.awt.event.KeyEvent;
 
 public class Game extends Canvas implements GameEvents {
 
     private final GameLoop loop;
-    private final Camera camera;
+    private final Camera mainCamera;
+    private final Input input;
 
     public Game() {
+        input = new Input();
+        this.addKeyListener(input);
+        this.addMouseListener(input);
+
         loop = new GameLoop(this);
-        camera = new Camera(this, true);
+        mainCamera = new Camera(this, true);
     }
 
     public void start() {
@@ -25,31 +30,28 @@ public class Game extends Canvas implements GameEvents {
 
     @Override
     public void onHandleInput() {
-        
+        Input.update();
     }
 
     @Override
     public void onUpdate(double dt) {
+        if (Input.getKey(KeyEvent.VK_A)) {
+            mainCamera.getCameraTransform().translate(10, 0);
+        } else if (Input.getKey(KeyEvent.VK_D)) {
+            mainCamera.getCameraTransform().translate(-10, 0);
+        }
+
+        if (Input.getKey(KeyEvent.VK_W)) {
+            mainCamera.getCameraTransform().translate(0, 10);
+        } else if (Input.getKey(KeyEvent.VK_S)) {
+            mainCamera.getCameraTransform().translate(0, -10);
+        }
     }
 
     @Override
     public void onRender() {
-        camera.begin();
-        camera.getInternalGraphics().setColor(Color.WHITE);
-        camera.getInternalGraphics().drawRect(40, 40, 50, 50);
-        camera.getInternalGraphics().drawRect(100, 100, 50, 50);
-        camera.getInternalGraphics().drawRect(160, 160, 50, 50);
-        camera.getInternalGraphics().drawRect(220, 220, 50, 50);
-        camera.getInternalGraphics().drawRect(280, 280, 50, 50);
-        camera.getInternalGraphics().drawRect(340, 340, 50, 50);
-        camera.getInternalGraphics().drawRect(400, 400, 50, 50);
-        camera.getInternalGraphics().drawRect(460, 340, 50, 50);
-        camera.getInternalGraphics().drawRect(520, 280, 50, 50);
-        camera.getInternalGraphics().drawRect(580, 220, 50, 50);
-        camera.getInternalGraphics().drawRect(640, 160, 50, 50);
-        camera.getInternalGraphics().drawRect(700, 100, 50, 50);
-        camera.getInternalGraphics().drawRect(760, 40, 50, 50);
-        camera.end();
+        mainCamera.begin();
+        mainCamera.end();
     }
 
 }

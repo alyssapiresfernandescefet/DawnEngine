@@ -1,42 +1,40 @@
 package com.dawnengine.game.entity;
 
-import com.dawnengine.graphics.Renderer;
-import com.dawnengine.math.Vector2;
-import java.awt.geom.AffineTransform;
+import com.dawnengine.graphics.CanvasDrawer;
+import java.awt.Image;
 
-/**
- *
- * @author alyss
- */
-public class GameObject implements Entity {
+public abstract class GameObject implements Entity {
 
-    private final AffineTransform transform;
+    private final Transform transform;
+    private Image image;
 
     public GameObject() {
-        transform = new AffineTransform();
+        transform = new Transform();
     }
 
-    public GameObject(AffineTransform transform) {
-        this.transform = new AffineTransform(transform);
-    }
-
-    public GameObject(Vector2 position) {
-        this();
-        transform.translate(position.x, position.y);
-    }
-
-    @Override
-    public void update(double dt) {
-        
-    }
-
-    @Override
-    public void render(Renderer rend) {
-        
-    }
-
-    public AffineTransform transform() {
+    public Transform transform() {
         return transform;
+    }
+
+    public Image image() {
+        return image;
+    }
+
+    public void setImage(Image image) {
+        this.image = image;
+    }
+
+    public int getWidth() {
+        return image.getWidth(null);
+    }
+
+    public int getHeight() {
+        return image.getHeight(null);
+    }
+
+    @Override
+    public void render(CanvasDrawer rend) {
+        rend.drawGameObject(this);
     }
 
 }

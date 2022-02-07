@@ -28,15 +28,14 @@ public class GameLoop implements Runnable {
             long now = System.currentTimeMillis();
             double timeElapsed = (now - lastTime) * 0.001f;
             lastTime = now;
-            
-            gameEvents.onHandleInput();
 
             deltaTime += timeElapsed;
             while (deltaTime > TICK_TIME) {
                 gameEvents.onUpdate(deltaTime);
                 deltaTime -= TICK_TIME;
             }
-
+            
+            gameEvents.onHandleInput();
             gameEvents.onRender();
 
             double endTime = now + TICK_TIME * 1000;
