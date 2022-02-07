@@ -75,8 +75,9 @@ public class MainFrame extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                instance = new MainFrame();
-                instance.setVisible(true);
+                new GameFrame(1);
+//                instance = new MainFrame();
+//                instance.setVisible(true);
             }
         });
     }
