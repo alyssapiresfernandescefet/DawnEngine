@@ -12,19 +12,11 @@ public class Transform {
     private float rotation;
 
     public Transform() {
-        this(Vector2.zero(), Vector2.one(), 0f);
+        this(Vector2.zero(), Vector2.one(), 0);
     }
 
     public Transform(Vector2 position) {
-        this(position, Vector2.one(), 0f);
-    }
-
-    public Transform(Vector2 position, Vector2 scale) {
-        this(position, scale, 0f);
-    }
-
-    public Transform(Vector2 position, float rotation) {
-        this(position, Vector2.one(), rotation);
+        this(position, Vector2.one(), 0);
     }
 
     public Transform(Vector2 position, Vector2 scale, float rotation) {
@@ -37,15 +29,27 @@ public class Transform {
         return position;
     }
 
+    public void position(Vector2 position) {
+        this.position = new Vector2(position);
+    }
+
+    public void position(double x, double y) {
+        this.position = new Vector2(x, y);
+    }
+
     public Vector2 scale() {
         return scale;
+    }
+
+    public void scale(Vector2 scale) {
+        this.scale = new Vector2(scale);
     }
 
     public float rotation() {
         return rotation;
     }
 
-    public void setRotation(float rotation) {
+    public void rotation(float rotation) {
         this.rotation = rotation;
     }
 

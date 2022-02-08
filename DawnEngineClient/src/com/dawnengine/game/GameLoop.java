@@ -7,6 +7,7 @@ package com.dawnengine.game;
 public class GameLoop implements Runnable {
 
     private static final int UPS = 60;
+    private static final int NUPS = 10;
 
     private final Thread gameThread;
     private boolean isRunning = false;
@@ -19,27 +20,36 @@ public class GameLoop implements Runnable {
 
     @Override
     public void run() {
-        final double TICK_TIME = 1.0 / UPS;
+        final double UPDATE_TIME = 1.0 / UPS;
+        final double NETWORK_UPDATE_TIME = 1.0 / NUPS;
 
         long lastTime = System.currentTimeMillis();
         double deltaTime = 0.0;
+        double nDeltaTime = 0.0;
 
+        gameEvents.onStart();
         while (isRunning) {
             long now = System.currentTimeMillis();
             double timeElapsed = (now - lastTime) * 0.001f;
             lastTime = now;
 
             deltaTime += timeElapsed;
-            while (deltaTime > TICK_TIME) {
+            nDeltaTime += timeElapsed;
+            boolean updated = false;
+            while (deltaTime > UPDATE_TIME) {
                 gameEvents.onUpdate(deltaTime);
-                deltaTime -= TICK_TIME;
+                deltaTime -= UPDATE_TIME;
+                updated = true;
             }
             
-            gameEvents.onHandleInput();
-            gameEvents.onRender();
+            if (nDeltaTime > NETWORK_UPDATE_TIME) {
+                gameEvents.onNetworkUpdate();
+                nDeltaTime -= NETWORK_UPDATE_TIME;
+            }
 
-            double endTime = now + TICK_TIME * 1000;
-            while (System.currentTimeMillis() < endTime) {
+            if (updated) {
+                gameEvents.onRender();
+            } else {
                 try {
                     Thread.sleep(1);
                 } catch (InterruptedException ex) {

@@ -1,6 +1,6 @@
 package com.dawnengine.network;
 
-import com.dawnengine.model.PlayerClient;
+import com.dawnengine.model.NetworkEntity;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import java.io.IOException;
@@ -14,7 +14,7 @@ public class Server extends Listener {
     private static Server server;
     private com.esotericsoftware.kryonet.Server socket;
 
-    public static final HashMap<Integer, PlayerClient> players = new HashMap<>();
+    public static final HashMap<Integer, NetworkEntity> entities = new HashMap<>();
 
     private Server() throws IOException {
         socket = new com.esotericsoftware.kryonet.Server();
@@ -24,7 +24,7 @@ public class Server extends Listener {
 
     @Override
     public void disconnected(Connection connection) {
-        players.remove(connection.getID());
+        entities.remove(connection.getID());
         //TODO: Remove player from UI player list if exists.
     }
 
@@ -33,7 +33,7 @@ public class Server extends Listener {
         if (object instanceof String) {
             JSONObject obj = new JSONObject(object.toString());
             NetworkContext ctx = new NetworkContext(connection, obj);
-            ClientNetworkPackets.get(obj.getInt("code")).event.run(ctx);
+            ClientNetworkPackets.get(obj.getInt("code")).event.accept(ctx);
         }
     }
 
@@ -55,5 +55,9 @@ public class Server extends Listener {
     public static void close() {
         getServer().socket.stop();
         getServer().socket.close();
+    }
+
+    public com.esotericsoftware.kryonet.Server getSocket() {
+        return socket;
     }
 }

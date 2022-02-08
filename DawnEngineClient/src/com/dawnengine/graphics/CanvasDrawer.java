@@ -1,6 +1,6 @@
 package com.dawnengine.graphics;
 
-import com.dawnengine.game.entity.GameObject;
+import com.dawnengine.game.entity.Entity;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Font;
@@ -62,7 +62,7 @@ public abstract class CanvasDrawer {
         g.setFont(font);
     }
     
-    public abstract void drawGameObject(GameObject go);
+    public abstract void drawEntity(Entity entity);
 
     protected void onDrawBegin() {
     }

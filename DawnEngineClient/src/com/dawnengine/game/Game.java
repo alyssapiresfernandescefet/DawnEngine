@@ -1,8 +1,12 @@
 package com.dawnengine.game;
 
+import com.dawnengine.game.entity.Entity;
+import com.dawnengine.game.entity.LocalPlayer;
 import com.dawnengine.graphics.Camera;
+import com.dawnengine.math.Vector2;
 import java.awt.Canvas;
-import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Game extends Canvas implements GameEvents {
 
@@ -10,13 +14,21 @@ public class Game extends Canvas implements GameEvents {
     private final Camera mainCamera;
     private final Input input;
 
-    public Game() {
+    private static final ArrayList<Entity> entities = new ArrayList<>();
+    private static final HashMap<Integer, Entity> entitiesMap = new HashMap<>();
+
+    private LocalPlayer lp;
+
+    public Game(int playerID) {
         input = new Input();
         this.addKeyListener(input);
         this.addMouseListener(input);
+        this.addFocusListener(input);
 
         loop = new GameLoop(this);
-        mainCamera = new Camera(this, true);
+        mainCamera = new Camera(this);
+        lp = new LocalPlayer(playerID, Vector2.zero());
+        addEntity(lp);
     }
 
     public void start() {
@@ -29,29 +41,46 @@ public class Game extends Canvas implements GameEvents {
     }
 
     @Override
-    public void onHandleInput() {
-        Input.update();
+    public void onStart() {
+        for (Entity entity : entities) {
+            entity.start();
+        }
     }
 
     @Override
     public void onUpdate(double dt) {
-        if (Input.getKey(KeyEvent.VK_A)) {
-            mainCamera.getCameraTransform().translate(10, 0);
-        } else if (Input.getKey(KeyEvent.VK_D)) {
-            mainCamera.getCameraTransform().translate(-10, 0);
+        for (Entity entity : entities) {
+            entity.update(dt);
         }
+    }
 
-        if (Input.getKey(KeyEvent.VK_W)) {
-            mainCamera.getCameraTransform().translate(0, 10);
-        } else if (Input.getKey(KeyEvent.VK_S)) {
-            mainCamera.getCameraTransform().translate(0, -10);
+    @Override
+    public void onNetworkUpdate() {
+        for (Entity entity : entities) {
+            entity.networkUpdate();
         }
+        Input.update();
     }
 
     @Override
     public void onRender() {
         mainCamera.begin();
+        for (Entity entity : entities) {
+            mainCamera.drawEntity(entity);
+        }
         mainCamera.end();
+    }
+
+    public static boolean addEntity(Entity e) {
+        return entities.add(e) && entitiesMap.put(e.id(), e) == null;
+    }
+
+    public static boolean removeEntity(Entity e) {
+        return entities.remove(e) && entitiesMap.remove(e.id(), e);
+    }
+
+    public static Entity findEntityByID(int id) {
+        return entitiesMap.get(id);
     }
 
 }

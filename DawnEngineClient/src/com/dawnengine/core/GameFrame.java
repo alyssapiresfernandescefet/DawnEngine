@@ -1,15 +1,18 @@
 package com.dawnengine.core;
 
+import com.dawnengine.game.Game;
 import com.dawnengine.network.Client;
 import javax.swing.JOptionPane;
 
 public class GameFrame extends javax.swing.JFrame {
-
-    private final int playerID;
+    
+    private final Game game;
 
     public GameFrame(int playerID) {
-        this.playerID = playerID;
         initComponents();
+        game = new Game(playerID);
+        game.setBounds(10, 10, getWidth() - 35, getHeight() - 55);
+        getContentPane().add(game);
         this.setVisible(true);
         game.start();
     }
@@ -29,8 +32,6 @@ public class GameFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        game = new com.dawnengine.game.Game();
-
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         setMaximumSize(new java.awt.Dimension(800, 600));
         setMinimumSize(new java.awt.Dimension(800, 600));
@@ -41,23 +42,15 @@ public class GameFrame extends javax.swing.JFrame {
             }
         });
 
-        game.setBackground(new java.awt.Color(0, 0, 0));
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(game, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+            .addGap(0, 400, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(game, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+            .addGap(0, 300, Short.MAX_VALUE)
         );
 
         pack();
@@ -69,6 +62,5 @@ public class GameFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_formWindowClosing
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private com.dawnengine.game.Game game;
     // End of variables declaration//GEN-END:variables
 }

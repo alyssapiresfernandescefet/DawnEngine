@@ -32,6 +32,10 @@ public class Vector2 {
         return new Vector2(-1, 0);
     }
 
+    public Vector2() {
+        this(0, 0);
+    }
+
     public Vector2(float x, float y) {
         this.x = x;
         this.y = y;

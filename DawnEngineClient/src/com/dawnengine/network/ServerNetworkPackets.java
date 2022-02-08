@@ -1,17 +1,25 @@
 package com.dawnengine.network;
 
+import java.util.function.Consumer;
+
 public enum ServerNetworkPackets {
-    LOGIN_RESPONSE(0xFFFFF001, (ctx) -> {
-        ClientNetworkEvents.onServerLoginResponse(ctx);
+    LOGIN_RESPONSE(0xFFFFF001, ctx -> {
+        NetworkEvents.onServerLoginResponse(ctx);
     }),
-    REGISTER_RESPONSE(0xFFFFF002, (ctx) -> {
-        ClientNetworkEvents.onServerRegisterResponse(ctx);
+    REGISTER_RESPONSE(0xFFFFF002, ctx -> {
+        NetworkEvents.onServerRegisterResponse(ctx);
+    }),
+    ENTITY_INSTANCE(0xFFFFF003, ctx -> {
+        NetworkEvents.instantiateNewEntity(ctx);
+    }),
+    TRANSFORM_UPDATE(0xFFFFF004, ctx -> {
+        NetworkEvents.updateTransform(ctx);
     }),;
 
     public final int code;
-    public final NetworkEvent event;
+    public final Consumer<NetworkContext> event;
 
-    ServerNetworkPackets(int code, NetworkEvent event) {
+    ServerNetworkPackets(int code, Consumer<NetworkContext> event) {
         this.code = code;
         this.event = event;
     }

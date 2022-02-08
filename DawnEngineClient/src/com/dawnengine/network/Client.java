@@ -39,18 +39,13 @@ public class Client extends Listener {
         if (object instanceof String str) {
             var obj = new JSONObject(str);
             var ctx = new NetworkContext(connection, obj);
-            ServerNetworkPackets.get(obj.getInt("code")).event.invoke(ctx);
+            ServerNetworkPackets.get(obj.getInt("code")).event.accept(ctx);
         }
     }
 
     @Override
     public void disconnected(Connection connection) {
-        System.out.println("Discconnected from" + connection.getID());
-    }
-
-    @Override
-    public void connected(Connection connection) {
-        System.out.println("Successfully connected to " + connection.getID());
+        
     }
 
     public com.esotericsoftware.kryonet.Client getSocket() {
@@ -62,6 +57,23 @@ public class Client extends Listener {
             client = new Client();
         }
         return client;
+    }
+
+    public void sendPacketTCP(ClientNetworkPackets packet,
+            JSON... data) {
+        socket.sendTCP(createPacket(packet, data));
+    }
+
+    public void sendPacketUDP(ClientNetworkPackets packet,
+            JSON... data) {
+        socket.sendUDP(createPacket(packet, data));
+    }
+
+    public static EntityPacket createEntityPacket(ClientNetworkPackets packet,
+            PacketType type,
+            JSON... data) {
+        var p = createPacket(packet, data);
+        return new EntityPacket(packet.code, p, type);
     }
 
     public static String createPacket(ClientNetworkPackets packet,

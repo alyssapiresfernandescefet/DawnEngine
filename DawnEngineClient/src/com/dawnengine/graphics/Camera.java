@@ -1,9 +1,10 @@
 package com.dawnengine.graphics;
 
-import com.dawnengine.game.entity.GameObject;
 import com.dawnengine.game.entity.Transform;
+import com.dawnengine.game.entity.Entity;
 import com.dawnengine.math.Vector2;
 import java.awt.Canvas;
+import java.awt.Color;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.font.FontRenderContext;
@@ -20,11 +21,12 @@ public class Camera extends CanvasDrawer {
         return main;
     }
 
-    public Camera(Canvas targetCanvas, boolean isMainCamera) {
+    public Camera(Canvas targetCanvas) {
         super(targetCanvas);
-        if (isMainCamera) {
-            main = this;
+        if (main != null) {
+            throw new ExceptionInInitializerError("There is already an active camera.");
         }
+        main = this;
     }
 
     public void drawRect(Vector2 position, Vector2 size, float rotation, Vector2 scale) {
@@ -72,19 +74,24 @@ public class Camera extends CanvasDrawer {
     }
 
     @Override
-    public void drawGameObject(GameObject go) {
-        if (go.image() == null) {
+    public void drawEntity(Entity entity) {
+        if (entity.image() == null) {
+            Color old = g.getColor();
+            g.setColor(Color.MAGENTA);
+            fillRect(entity.transform().position(), new Vector2(50, 50),
+                    entity.transform().rotation(), entity.transform().scale());
+            g.setColor(old);
             return;
         }
 
-        Transform trans = go.transform();
+        Transform trans = entity.transform();
         g.setTransform(new AffineTransform(cameraTransform));
-        g.translate(trans.position().x + go.getWidth() / 2,
-                trans.position().y + go.getHeight() / 2);
+        g.translate(trans.position().x + entity.getWidth() / 2,
+                trans.position().y + entity.getHeight() / 2);
         g.rotate(Math.toRadians(trans.rotation()));
         g.scale(trans.scale().x, trans.scale().y);
-        g.translate(-(go.getWidth() / 2), -(go.getHeight() / 2));
-        g.drawImage(go.image(), 0, 0, null);
+        g.translate(-(entity.getWidth() / 2), -(entity.getHeight() / 2));
+        g.drawImage(entity.image(), 0, 0, null);
         g.setTransform(cameraTransform);
     }
 

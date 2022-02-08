@@ -1,5 +1,7 @@
 package com.dawnengine.game;
 
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -10,7 +12,7 @@ import java.util.ArrayList;
  *
  * @author alyss
  */
-public class Input implements KeyListener, MouseListener {
+public class Input implements KeyListener, MouseListener, FocusListener {
 
     private static final ArrayList<Integer> pressedKeys = new ArrayList<>();
     private static final ArrayList<Integer> releasedKeys = new ArrayList<>();
@@ -31,6 +33,18 @@ public class Input implements KeyListener, MouseListener {
     
     public static boolean getKeyUp(int keyCode) {
         return releasedKeys.contains(keyCode);
+    }
+    
+    @Override
+    public void focusGained(FocusEvent e) {
+        
+    }
+
+    @Override
+    public void focusLost(FocusEvent e) {
+        pressedKeys.clear();
+        releasedKeys.clear();
+        heldKeys.clear();
     }
 
     @Override
