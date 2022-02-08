@@ -2,7 +2,7 @@ package com.dawnengine.network;
 
 import com.dawnengine.core.MainFrame;
 import com.dawnengine.game.Game;
-import com.dawnengine.game.entity.Entity;
+import com.dawnengine.entity.Entity;
 import com.dawnengine.math.Vector2;
 
 public final class NetworkEvents {
@@ -39,21 +39,45 @@ public final class NetworkEvents {
         entity.transform().rotation(rot);
     }
 
-    static void instantiateNewEntity(NetworkContext ctx) {
+    public static void instantiateNewEntity(NetworkContext ctx) {
         var json = ctx.json();
         var arr = json.getJSONArray("entities");
-        
+
         if (arr == null) {
             return;
         }
 
         for (int i = 0; i < arr.length(); i++) {
             var obj = arr.getJSONObject(i);
+            
+            if (obj == null) {
+                return;
+            }
+            
             var pos = new Vector2(obj.getFloat("posX"), obj.getFloat("posY"));
             var scale = new Vector2(obj.getFloat("scaX"), obj.getFloat("scaY"));
             var rot = obj.getFloat("rot");
             Game.addEntity(new Entity(obj.getInt("id"), pos, scale, rot));
         }
 
+    }
+
+    public static void destroyEntity(NetworkContext ctx) {
+        var json = ctx.json();
+        var arr = json.getJSONArray("entities");
+
+        if (arr == null) {
+            return;
+        }
+
+        for (int i = 0; i < arr.length(); i++) {
+            var obj = arr.getJSONObject(i);
+            
+            if (obj == null) {
+                return;
+            }
+            
+            Game.removeEntity(obj.getInt("id"));
+        }
     }
 }

@@ -1,7 +1,6 @@
 package com.dawnengine.network;
 
 import com.dawnengine.core.Settings;
-import com.dawnengine.utils.JSON;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import java.io.IOException;
@@ -11,12 +10,20 @@ import org.json.JSONObject;
 public class Client extends Listener {
 
     private static Client client;
+    static {
+        client = new Client();
+    }
+    
     private com.esotericsoftware.kryonet.Client socket;
 
     private Client() {
         socket = new com.esotericsoftware.kryonet.Client();
         socket.addListener(this);
         socket.start();
+    }
+
+    public static Client getClient() {
+        return client;
     }
 
     public void openConnection() throws IOException {
@@ -39,50 +46,27 @@ public class Client extends Listener {
         if (object instanceof String str) {
             var obj = new JSONObject(str);
             var ctx = new NetworkContext(connection, obj);
-            ServerNetworkPackets.get(obj.getInt("code")).event.accept(ctx);
+            ServerPacketType.get(obj.getInt("code")).event.accept(ctx);
         }
     }
 
-    @Override
-    public void disconnected(Connection connection) {
-        
+    public int sendTCP(String serialized) {
+        return socket.sendTCP(serialized);
     }
 
-    public com.esotericsoftware.kryonet.Client getSocket() {
-        return socket;
+    public int sendUDP(String serialized) {
+        return socket.sendUDP(serialized);
     }
 
-    public static Client getClient() {
-        if (client == null) {
-            client = new Client();
+    public void sendPacket(ClientPacketType type, JSONObject obj) {
+        obj.put("code", type.code);
+        switch (type.route) {
+            case "TCP":
+                sendTCP(obj.toString());
+                break;
+            case "UDP":
+                sendUDP(obj.toString());
+                break;
         }
-        return client;
-    }
-
-    public void sendPacketTCP(ClientNetworkPackets packet,
-            JSON... data) {
-        socket.sendTCP(createPacket(packet, data));
-    }
-
-    public void sendPacketUDP(ClientNetworkPackets packet,
-            JSON... data) {
-        socket.sendUDP(createPacket(packet, data));
-    }
-
-    public static EntityPacket createEntityPacket(ClientNetworkPackets packet,
-            PacketType type,
-            JSON... data) {
-        var p = createPacket(packet, data);
-        return new EntityPacket(packet.code, p, type);
-    }
-
-    public static String createPacket(ClientNetworkPackets packet,
-            JSON... data) {
-        var json = new JSONObject();
-        json.put("code", packet.code);
-        for (JSON dat : data) {
-            json.put(dat.key(), dat.value());
-        }
-        return json.toString();
     }
 }

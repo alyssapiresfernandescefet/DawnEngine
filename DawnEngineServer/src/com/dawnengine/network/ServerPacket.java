@@ -1,15 +1,16 @@
 package com.dawnengine.network;
 
-public enum ServerNetworkPackets {
+public enum ServerPacket {
     LOGIN_RESPONSE(0xFFFFF001),
     REGISTER_RESPONSE(0xFFFFF002),
     ENTITY_INSTANCE(0xFFFFF003),
-    TRANSFORM_UPDATE(0xFFFFF004),
+    ENTITY_DESTROY(0xFFFFF004),
+    TRANSFORM_UPDATE(0xFFFFF005),
     ;
 
     public final int code;
 
-    ServerNetworkPackets(int code) {
+    ServerPacket(int code) {
         this.code = code;
     }
 }

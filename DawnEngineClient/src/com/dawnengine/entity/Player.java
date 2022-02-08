@@ -1,4 +1,4 @@
-package com.dawnengine.game.entity;
+package com.dawnengine.entity;
 
 import com.dawnengine.math.Vector2;
 

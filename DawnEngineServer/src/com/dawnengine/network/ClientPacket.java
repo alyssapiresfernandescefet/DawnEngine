@@ -2,15 +2,15 @@ package com.dawnengine.network;
 
 import java.util.function.Consumer;
 
-public enum ClientNetworkPackets {
+public enum ClientPacket {
 
-    LOGIN_REQUEST(0xCFFFF001, (ctx) -> {
+    LOGIN_REQUEST(0xCFFFF001, ctx -> {
         NetworkEvents.onClientLoginRequest(ctx);
     }),
-    REGISTER_REQUEST(0xCFFFF002, (ctx) -> {
+    REGISTER_REQUEST(0xCFFFF002, ctx -> {
         NetworkEvents.onClientRegisterRequest(ctx);
     }),
-    TRANSFORM_UPDATE(0xCFFFF003, (ctx) -> {
+    TRANSFORM_UPDATE(0xCFFFF003, ctx -> {
         NetworkEvents.onPlayerTransformUpdate(ctx);
     }),
     ;
@@ -18,13 +18,13 @@ public enum ClientNetworkPackets {
     public final int code;
     public final Consumer<NetworkContext> event;
 
-    ClientNetworkPackets(int code, Consumer<NetworkContext> event) {
+    ClientPacket(int code, Consumer<NetworkContext> event) {
         this.code = code;
         this.event = event;
     }
 
-    public static ClientNetworkPackets get(int code) {
-        for (ClientNetworkPackets value : values()) {
+    public static ClientPacket get(int code) {
+        for (ClientPacket value : values()) {
             if (value.code == code) {
                 return value;
             }

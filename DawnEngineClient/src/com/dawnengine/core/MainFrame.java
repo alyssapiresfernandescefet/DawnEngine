@@ -1,13 +1,9 @@
 package com.dawnengine.core;
 
-import com.dawnengine.game.entity.Entity;
-import com.dawnengine.math.Vector2;
 import com.dawnengine.network.Client;
-import com.dawnengine.network.ClientNetworkPackets;
-import com.dawnengine.utils.JSON;
+import com.dawnengine.network.ClientPacketType;
 import java.awt.CardLayout;
 import java.io.IOException;
-import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import org.json.JSONObject;
 
@@ -487,9 +483,9 @@ public class MainFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Unable to connect to the server.");
             return;
         }
-        client.sendPacketTCP(ClientNetworkPackets.LOGIN_REQUEST,
-                new JSON("username", username),
-                new JSON("password", password));
+        client.sendPacket(ClientPacketType.LOGIN_REQUEST,
+                new JSONObject().put("username", username)
+                        .put("password", password));
     }//GEN-LAST:event_lblLoginEnterMouseClicked
 
     private void lblRegisterMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegisterMouseClicked
@@ -519,9 +515,9 @@ public class MainFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Unable to connect to the server.");
             return;
         }
-        client.sendPacketTCP(ClientNetworkPackets.REGISTER_REQUEST,
-                new JSON("username", username),
-                new JSON("password", password));
+        client.sendPacket(ClientPacketType.REGISTER_REQUEST,
+                new JSONObject().put("username", username)
+                        .put("password", password));
     }//GEN-LAST:event_lblRegisterMouseClicked
 
     private void lblSaveMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblSaveMouseClicked

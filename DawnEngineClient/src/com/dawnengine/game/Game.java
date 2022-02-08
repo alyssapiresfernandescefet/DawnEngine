@@ -1,7 +1,7 @@
 package com.dawnengine.game;
 
-import com.dawnengine.game.entity.Entity;
-import com.dawnengine.game.entity.LocalPlayer;
+import com.dawnengine.entity.Entity;
+import com.dawnengine.entity.LocalPlayer;
 import com.dawnengine.graphics.Camera;
 import com.dawnengine.math.Vector2;
 import java.awt.Canvas;
@@ -75,8 +75,13 @@ public class Game extends Canvas implements GameEvents {
         return entities.add(e) && entitiesMap.put(e.id(), e) == null;
     }
 
-    public static boolean removeEntity(Entity e) {
-        return entities.remove(e) && entitiesMap.remove(e.id(), e);
+    public static boolean removeEntity(int id) {
+        var e = entitiesMap.remove(id);
+        var notNull = e != null;
+        if (notNull) {
+            e.onDestroy();
+        }
+        return notNull && entities.remove(e);
     }
 
     public static Entity findEntityByID(int id) {

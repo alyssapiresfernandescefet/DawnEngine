@@ -1,6 +1,6 @@
 package com.dawnengine.graphics;
 
-import com.dawnengine.game.entity.Entity;
+import com.dawnengine.entity.Entity;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Font;

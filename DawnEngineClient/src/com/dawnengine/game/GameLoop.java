@@ -41,13 +41,12 @@ public class GameLoop implements Runnable {
                 deltaTime -= UPDATE_TIME;
                 updated = true;
             }
-            
-            if (nDeltaTime > NETWORK_UPDATE_TIME) {
-                gameEvents.onNetworkUpdate();
-                nDeltaTime -= NETWORK_UPDATE_TIME;
-            }
 
             if (updated) {
+                if (nDeltaTime >= NETWORK_UPDATE_TIME) {
+                    gameEvents.onNetworkUpdate();
+                    nDeltaTime = 0;
+                }
                 gameEvents.onRender();
             } else {
                 try {

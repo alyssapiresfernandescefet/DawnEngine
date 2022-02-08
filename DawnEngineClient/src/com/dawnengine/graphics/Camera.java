@@ -1,7 +1,7 @@
 package com.dawnengine.graphics;
 
-import com.dawnengine.game.entity.Transform;
-import com.dawnengine.game.entity.Entity;
+import com.dawnengine.entity.Transform;
+import com.dawnengine.entity.Entity;
 import com.dawnengine.math.Vector2;
 import java.awt.Canvas;
 import java.awt.Color;
@@ -83,7 +83,6 @@ public class Camera extends CanvasDrawer {
             g.setColor(old);
             return;
         }
-
         Transform trans = entity.transform();
         g.setTransform(new AffineTransform(cameraTransform));
         g.translate(trans.position().x + entity.getWidth() / 2,

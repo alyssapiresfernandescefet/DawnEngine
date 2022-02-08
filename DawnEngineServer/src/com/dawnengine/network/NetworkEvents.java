@@ -26,7 +26,7 @@ public class NetworkEvents {
         int playerID = ctx.connection.getID();
         JSONObject obj = new JSONObject();
 
-        obj.put("code", ServerNetworkPackets.LOGIN_RESPONSE.code);
+        obj.put("code", ServerPacket.LOGIN_RESPONSE.code);
         obj.put("accept", invalidReason == null);
         if (invalidReason != null) {
             obj.put("reason", invalidReason);
@@ -63,7 +63,7 @@ public class NetworkEvents {
             obj.put("reason", invalidReason);
         }
 
-        obj.put("code", ServerNetworkPackets.REGISTER_RESPONSE.code);
+        obj.put("code", ServerPacket.REGISTER_RESPONSE.code);
         obj.put("accept", invalidReason == null);
         obj.put("playerID", playerID);
 
@@ -79,12 +79,10 @@ public class NetworkEvents {
         entity.setScaleX(json.getFloat("scaX"));
         entity.setScaleY(json.getFloat("scaY"));
         entity.setRotation(json.getFloat("rot"));
-        
-        System.out.println(json.getFloat("posX") + " - " + json.getFloat("posY"));
 
         json.remove("code");
-        json.put("code", ServerNetworkPackets.TRANSFORM_UPDATE.code);
-        Server.getServer().getSocket().sendToAllExceptUDP(
+        json.put("code", ServerPacket.TRANSFORM_UPDATE.code);
+        Server.getServer().sendToAllExceptUDP(
                 ctx.connection.getID(), json.toString());
     }
 
@@ -92,7 +90,7 @@ public class NetworkEvents {
         Server.entities.put(entity.id(), entity);
 
         var json = new JSONObject();
-        json.put("code", ServerNetworkPackets.ENTITY_INSTANCE.code);
+        json.put("code", ServerPacket.ENTITY_INSTANCE.code);
 
         var array = new JSONArray();
         var obj = new JSONObject();
@@ -105,11 +103,11 @@ public class NetworkEvents {
         array.put(obj);
         json.put("entities", array);
 
-        Server.getServer().getSocket().sendToAllExceptTCP(
+        Server.getServer().sendToAllExceptTCP(
                 entity.id(), json.toString());
 
         json = new JSONObject();
-        json.put("code", ServerNetworkPackets.ENTITY_INSTANCE.code);
+        json.put("code", ServerPacket.ENTITY_INSTANCE.code);
 
         array = new JSONArray();
         for (var en : Server.entities.values()) {
@@ -124,6 +122,6 @@ public class NetworkEvents {
         }
         json.put("entities", array);
 
-        Server.getServer().getSocket().sendToTCP(entity.id(), json.toString());
+        Server.getServer().sendToTCP(entity.id(), json.toString());
     }
 }

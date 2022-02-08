@@ -1,6 +1,5 @@
-package com.dawnengine.game.entity;
+package com.dawnengine.entity;
 
-import com.dawnengine.game.Game;
 import com.dawnengine.math.Vector2;
 import java.awt.Image;
 
@@ -61,9 +60,5 @@ public class Entity {
     }
 
     public void onDestroy() {
-    }
-    
-    public static void destroy(Entity entity) {
-        Game.removeEntity(entity);
     }
 }

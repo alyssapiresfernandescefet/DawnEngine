@@ -1,32 +1,33 @@
 package com.dawnengine.network;
 
+import java.util.Objects;
+import org.json.JSONObject;
+
 /**
- *
+ * An utility class used by Network Entities to send data.
  * @author alyss
  */
 public class EntityPacket {
-    private final int code;
-    private final String packet;
-    private final PacketType type;
+    private final ClientPacketType type;
+    private final JSONObject json;
 
-    public EntityPacket(int code, String packet, PacketType type) {
-        this.code = code;
-        this.packet = packet;
+    public EntityPacket(ClientPacketType type, JSONObject json) {
         this.type = type;
+        this.json = json;
     }
 
-    public String packet() {
-        return packet;
-    }
-
-    public PacketType type() {
+    public ClientPacketType type() {
         return type;
+    }
+
+    public JSONObject json() {
+        return json;
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 79 * hash + this.code;
+        int hash = 5;
+        hash = 83 * hash + Objects.hashCode(this.type);
         return hash;
     }
 
@@ -42,11 +43,10 @@ public class EntityPacket {
             return false;
         }
         final EntityPacket other = (EntityPacket) obj;
-        if (this.code != other.code) {
+        if (this.type != other.type) {
             return false;
         }
         return true;
     }
-    
     
 }
