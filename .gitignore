@@ -8,6 +8,7 @@ nbdist/
 .nb-gradle/
 **/engine.config
 
-DawnEngineServer/data/*
+DawnEngineClient/data files/**
+DawnEngineServer/data/**
 /DawnEngineClient/target/
 /DawnEngineServer/target/

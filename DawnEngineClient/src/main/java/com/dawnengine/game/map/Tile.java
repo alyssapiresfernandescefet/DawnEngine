@@ -16,7 +16,7 @@ public class Tile implements Serializable {
     private final TileLayer layer;
     private final int tilesetIndex, tileIndex;
     private final int mapLocationIndex;
-    private final transient BufferedImage sprite;
+    private transient BufferedImage sprite;
     private final int[] spriteArray;
 
     public Tile() {
@@ -40,6 +40,10 @@ public class Tile implements Serializable {
     }
 
     public Image getSprite() {
+        if (sprite == null) {
+            sprite = new BufferedImage(TILE_SIZE_X, TILE_SIZE_Y, BufferedImage.TYPE_INT_RGB);
+            sprite.setRGB(0, 0, TILE_SIZE_X, TILE_SIZE_Y, spriteArray, 0, TILE_SIZE_X);
+        }
         return sprite;
     }
 
