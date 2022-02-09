@@ -12,12 +12,14 @@ public class Tile implements Sprite, Serializable {
 
     public static final int TILE_SIZE_X = 32, TILE_SIZE_Y = 32;
     
+    private int index;
     private Image sprite;
 
     public Tile() {
     }
     
-    public Tile(Image sprite) {
+    public Tile(int index, Image sprite) {
+        this.index = index;
         this.sprite = sprite;
     }
 
@@ -42,5 +44,9 @@ public class Tile implements Sprite, Serializable {
     @Override
     public int getHeight() {
         return TILE_SIZE_Y;
+    }
+
+    public int getIndex() {
+        return index;
     }
 }

@@ -1,6 +1,7 @@
 package com.dawnengine.game.map;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -13,7 +14,7 @@ public class Map implements Serializable {
     private String name;
     private long lastRevision;
     private int tileCountX, tileCountY;
-    private Tile[] tiles;
+    private ArrayList<Tile>[] tiles;
 
     public Map() {
         lastRevision = new Date().getTime();
@@ -50,46 +51,47 @@ public class Map implements Serializable {
     public void setTileCountY(int tileCountY) {
         this.tileCountY = tileCountY;
     }
-    
+
     public int getWidth() {
         return getTileCountX() * Tile.TILE_SIZE_X;
     }
-    
+
     public int getHeight() {
         return getTileCountY() * Tile.TILE_SIZE_Y;
     }
 
-    public Tile[] getTiles() {
-        return tiles;
-    }
-
-    public void setTiles(Tile[] tiles) {
-        this.tiles = tiles;
+    public ArrayList<Tile> getTiles(TileLayer layer) {
+        return tiles[layer.order];
     }
 
     public void setTilesFromString(String tiles) {
         String[] tilesArr = tiles.split("_");
-        
-        System.out.println(tiles);
-        
-        var size = tileCountX * tileCountY;
-        if (tilesArr.length != size) {
-            throw new IllegalArgumentException("tiles");
-        }
-
-        this.tiles = new Tile[size];
+        this.tiles = new ArrayList[]{
+            new ArrayList(),
+            new ArrayList(),
+            new ArrayList(),
+            new ArrayList(),
+            new ArrayList()
+        };
 
         var tilesetMap = new HashMap<Integer, Tileset>();
         for (int i = 0; i < tilesArr.length; i++) {
             var split = tilesArr[i].split("x");
-            var tilesetIndex = Integer.parseInt(split[0]);
-            var tileIndex = Integer.parseInt(split[1]);
-            if (!tilesetMap.containsKey(tilesetIndex)) {
-                tilesetMap.put(tilesetIndex, Tileset.load(tilesetIndex));
-            }
-            var tileset = tilesetMap.get(tilesetIndex);
+            var layer = TileLayer.get(split[0]);
+            var index = Integer.parseInt(split[1]);
+            var tilesetIndex = Integer.parseInt(split[2]);
+            var tileIndex = Integer.parseInt(split[3]);
 
-            this.tiles[i] = new Tile(tileset.getImageTile(tileIndex));
+            Tileset tileset;
+            if (!tilesetMap.containsKey(tilesetIndex)) {
+                tileset = Tileset.load(tilesetIndex);
+                tilesetMap.put(tilesetIndex, tileset);
+            } else {
+                tileset = tilesetMap.get(tilesetIndex);
+            }
+
+            this.tiles[layer.order]
+                    .add(new Tile(index, tileset.getImageTile(tileIndex)));
         }
     }
 

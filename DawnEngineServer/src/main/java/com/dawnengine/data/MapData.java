@@ -25,7 +25,7 @@ public class MapData implements Serializable {
 
         this.tiles = new String[this.sizeX * this.sizeY];
         for (int i = 0; i < tiles.length; i++) {
-            this.tiles[i] = "1x1";
+            this.tiles[i] = "gx" + i + "x1x8";
         }
     }
 

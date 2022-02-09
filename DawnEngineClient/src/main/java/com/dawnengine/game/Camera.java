@@ -3,7 +3,7 @@ package com.dawnengine.game;
 import com.dawnengine.entity.Transform;
 import com.dawnengine.entity.Entity;
 import com.dawnengine.game.map.Map;
-import com.dawnengine.game.map.Tile;
+import com.dawnengine.game.map.TileLayer;
 import com.dawnengine.math.Vector2;
 import java.awt.Canvas;
 import java.awt.Color;
@@ -141,23 +141,26 @@ public class Camera {
     }
 
     public void drawMap(Map map) {
-        if (map == null || map.getTiles() == null) {
+        if (map == null) {
             return;
         }
 
-        var tiles = map.getTiles();
-        var width = map.getTileCountX();
-        for (int i = 0; i < tiles.length; i++) {
-            var tile = tiles[i];
-            var img = tile.sprite();
-            if (img == null) {
-                continue;
+        for (TileLayer layer : TileLayer.values()) {
+            var tiles = map.getTiles(layer);
+            var width = map.getTileCountX();
+            for (int i = 0; i < tiles.size(); i++) {
+                var tile = tiles.get(i);
+                var img = tile.sprite();
+                if (img == null) {
+                    continue;
+                }
+                g.drawImage(img,
+                        tile.getWidth() * (tile.getIndex() % width),
+                        tile.getHeight() * (tile.getIndex() / width),
+                        null);
             }
-            g.drawImage(img,
-                    tile.getWidth() * (i % width),
-                    tile.getHeight() * (i / width),
-                    null);
         }
+
     }
 
     public AffineTransform getCameraTransform() {

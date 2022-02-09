@@ -21,7 +21,7 @@ public class Server extends Listener {
     private static final HashMap<Integer, PlayerData> players = new HashMap<>();
 
     private Server() throws IOException {
-        socket = new com.esotericsoftware.kryonet.Server();
+        socket = new com.esotericsoftware.kryonet.Server(65536, 8192);
         socket.bind(3001, 3002);
         socket.addListener(this);
     }
