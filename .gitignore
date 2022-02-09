@@ -9,3 +9,5 @@ nbdist/
 **/engine.config
 
 DawnEngineServer/data/*
+/DawnEngineClient/target/
+/DawnEngineServer/target/
