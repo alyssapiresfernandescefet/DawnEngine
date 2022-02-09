@@ -5,16 +5,20 @@ import org.json.JSONObject;
 
 /**
  * An utility class used by Network Entities to send data.
+ *
  * @author alyss
  */
 public class EntityPacket {
+
     private final ClientPacketType type;
     private final JSONObject json;
 
     public EntityPacket(ClientPacketType type, JSONObject json) {
         this.type = type;
         this.json = json;
-        this.json.put("code", this.type.code);
+        if (!this.json.has("code")) {
+            this.json.put("code", this.type.code);
+        }
     }
 
     public ClientPacketType type() {
@@ -49,5 +53,5 @@ public class EntityPacket {
         }
         return true;
     }
-    
+
 }

@@ -9,19 +9,14 @@ import com.dawnengine.math.Vector2;
 public final class NetworkEvents {
 
     public static void onServerLoginResponse(NetworkContext ctx) {
-        var json = ctx.json();
-        MainFrame.getInstance().onLoginComplete(
-                json.getBoolean("accept"),
-                json.optString("reason"),
-                json.optInt("playerID"));
+        MainFrame.getInstance().onLoginComplete(ctx.json());
     }
 
     public static void onServerRegisterResponse(NetworkContext ctx) {
         var json = ctx.json();
         MainFrame.getInstance().onRegisterComplete(
                 json.getBoolean("accept"),
-                json.optString("reason"),
-                json.optInt("playerID"));
+                json.optString("reason"));
     }
 
     public static void updateTransform(NetworkContext ctx) {
@@ -50,11 +45,11 @@ public final class NetworkEvents {
 
         for (int i = 0; i < arr.length(); i++) {
             var obj = arr.getJSONObject(i);
-            
+
             if (obj == null) {
                 return;
             }
-            
+
             var pos = new Vector2(obj.getFloat("posX"), obj.getFloat("posY"));
             var scale = new Vector2(obj.getFloat("scaX"), obj.getFloat("scaY"));
             var rot = obj.getFloat("rot");
@@ -73,17 +68,22 @@ public final class NetworkEvents {
 
         for (int i = 0; i < arr.length(); i++) {
             var obj = arr.getJSONObject(i);
-            
+
             if (obj == null) {
                 return;
             }
-            
+
             Game.removeEntity(obj.getInt("id"));
         }
     }
-    
-    public static void onGameReady(NetworkContext ctx) {
-        GameFrame.getInstance().startGame(ctx.json().getInt("map"));
-        instantiateNewEntity(ctx);
+
+    public static void onCheckMapResponse(NetworkContext ctx) {
+        var json = ctx.json();
+        GameFrame.getInstance().getGame().onCheckMapReceived(json.getInt("mapIndex"),
+                json.getLong("lastRevision"));
+    }
+
+    public static void onGetMapResponse(NetworkContext ctx) {
+        GameFrame.getInstance().getGame().onGetMapReceived(ctx.json());
     }
 }

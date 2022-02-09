@@ -3,13 +3,6 @@ package com.dawnengine.entity;
 import com.dawnengine.math.Vector2;
 import java.awt.Image;
 
-/**
- * Entities are interactive objects with a Transform and an Image to be
- * rendered. An entity can either be static or dynamic through event methods.
- *
- *
- * @author alyss
- */
 public class Entity implements Sprite {
     
     private final int id;

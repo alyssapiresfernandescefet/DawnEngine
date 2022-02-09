@@ -1,10 +1,12 @@
 package com.dawnengine.network;
 
 import com.dawnengine.core.Settings;
+import com.dawnengine.utils.Utils;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import java.io.IOException;
 import java.net.InetAddress;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class Client extends Listener {
@@ -45,9 +47,24 @@ public class Client extends Listener {
     @Override
     public void received(Connection connection, Object object) {
         if (object instanceof String str) {
-            var obj = new JSONObject(str);
-            var ctx = new NetworkContext(connection, obj);
-            ServerPacketType.get(obj.getInt("code")).event.accept(ctx);
+            if (Utils.isJSONObject(str)) {
+                var obj = new JSONObject(str);
+                if (!obj.has("code")) {
+                    return;
+                }
+                var ctx = new NetworkContext(connection, obj);
+                ServerPacketType.get(obj.getInt("code")).event.accept(ctx);
+            } else if (Utils.isJSONArray(str)) {
+                var arr = new JSONArray(str);
+                for (int i = 0; i < arr.length(); i++) {
+                    var obj = arr.getJSONObject(i);
+                    if (!obj.has("code")) {
+                        continue;
+                    }
+                    var ctx = new NetworkContext(connection, obj);
+                    ServerPacketType.get(obj.getInt("code")).event.accept(ctx);
+                }
+            }
         }
     }
 
@@ -63,7 +80,9 @@ public class Client extends Listener {
         if (obj == null) {
             throw new NullPointerException();
         }
-        obj.put("code", type.code);
+        if (!obj.has("code")) {
+            obj.put("code", type.code);
+        }
         switch (type.route) {
             case "TCP":
                 sendTCP(obj.toString());

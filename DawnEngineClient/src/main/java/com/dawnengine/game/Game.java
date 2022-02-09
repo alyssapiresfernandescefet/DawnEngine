@@ -5,10 +5,13 @@ import com.dawnengine.entity.LocalPlayer;
 import com.dawnengine.game.map.Map;
 import com.dawnengine.game.map.MapLoader;
 import com.dawnengine.math.Vector2;
+import com.dawnengine.network.Client;
+import com.dawnengine.network.ClientPacketType;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
+import org.json.JSONObject;
 
 public class Game extends Canvas implements GameEvents {
 
@@ -22,7 +25,7 @@ public class Game extends Canvas implements GameEvents {
 
     private LocalPlayer lp;
 
-    public Game(int playerID) {
+    public Game(int playerID, int mapIndex) {
         this.setBackground(Color.MAGENTA);
         input = new Input();
         this.addKeyListener(input);
@@ -31,12 +34,15 @@ public class Game extends Canvas implements GameEvents {
 
         loop = new GameLoop(this);
         mainCamera = new Camera(this);
+
+        Client.getClient().sendPacket(ClientPacketType.CHECK_MAP_REQUEST,
+                new JSONObject().put("mapIndex", mapIndex));
+
         lp = new LocalPlayer(playerID, Vector2.zero());
         addEntity(lp);
     }
 
-    public void start(int mapIndex) {
-        map = MapLoader.load(mapIndex);
+    public void start() {
         this.createBufferStrategy(3);
         loop.start();
     }
@@ -70,10 +76,32 @@ public class Game extends Canvas implements GameEvents {
     @Override
     public void onRender() {
         mainCamera.begin();
+        mainCamera.drawMap(map);
         for (Entity entity : entities) {
             mainCamera.drawEntity(entity);
         }
         mainCamera.end();
+    }
+    
+    public void onCheckMapReceived(int mapIndex, long serverLastRevision) {
+        var map = MapLoader.load(mapIndex);
+        if (map != null && map.getLastRevision() == serverLastRevision) {
+            this.map = map;
+            return;
+        }
+        Client.getClient().sendPacket(ClientPacketType.GET_MAP_REQUEST, 
+                new JSONObject().put("mapIndex", mapIndex));
+    }
+    
+    public void onGetMapReceived(JSONObject json) {
+        var map = new Map();
+        map.setName(json.getString("name"));
+        map.setTileCountX(json.getInt("sizeX"));
+        map.setTileCountY(json.getInt("sizeY"));
+        map.setLastRevision(json.getLong("lastRevision"));
+        map.setTilesFromString(json.getString("tiles"));
+        MapLoader.saveAsync(json.getInt("mapIndex"), map);
+        this.map = map;
     }
 
     public static boolean addEntity(Entity e) {

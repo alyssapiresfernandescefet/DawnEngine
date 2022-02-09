@@ -1,16 +1,16 @@
 package com.dawnengine.managers;
 
 import com.dawnengine.data.PlayerData;
+import com.dawnengine.utils.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.nustaq.serialization.FSTObjectInput;
-import org.nustaq.serialization.FSTObjectOutput;
 
 /**
  *
@@ -19,7 +19,6 @@ import org.nustaq.serialization.FSTObjectOutput;
 public class PlayerManager {
 
     private static final File accountsDir = new File("data/accounts/");
-    private static final ArrayList<PlayerData> cachedPlayers = new ArrayList<>();
 
     static {
         if (!accountsDir.exists()) {
@@ -31,50 +30,44 @@ public class PlayerManager {
         File[] users = accountsDir.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File file, String string) {
-                return string.equals(getUserFileWithExtension(username));
+                return string.equals(username + ".bin");
             }
         });
 
-        if (users == null || users.length == 0) {
+        if (users.length == 0) {
             return null;
         }
 
-        try (FSTObjectInput in = new FSTObjectInput(new FileInputStream(users[0]))) {
-            PlayerData pd = (PlayerData) in.readObject(PlayerData.class);
-            cachedPlayers.add(pd);
-            return pd;
+        PlayerData pd = null;
+        try (var in = new Input(new FileInputStream(users[0]))) {
+            pd = Serializer.readObject(in, PlayerData.class);
         } catch (Exception ex) {
             Logger.getLogger(PlayerManager.class.getName()).log(Level.SEVERE, null, ex);
         }
-
-        return null;
+        return pd;
     }
 
-    public static boolean save(PlayerData player) {
+    public static boolean save(PlayerData pd) {
         File user = new File(accountsDir,
-                getUserFileWithExtension(player.getAccount().username));
+                pd.getAccount().username + ".bin");
 
-        try (FSTObjectOutput out = new FSTObjectOutput(new FileOutputStream(user))) {
-            out.writeObject(user);
-            return true;
+        try (var out = new Output(new FileOutputStream(user))) {
+            Serializer.writeObject(out, pd);
         } catch (IOException ex) {
             Logger.getLogger(PlayerManager.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
         }
-        return false;
-    }
-
-    private static String getUserFileWithExtension(String username) {
-        return username + ".bin";
+        return true;
     }
     
-    public static PlayerData getCachedPlayer(int id) {
-        for (int i = 0; i < cachedPlayers.size(); i++) {
-            var p = cachedPlayers.get(i);
-            if (p.id() == id) {
-                cachedPlayers.remove(i);
-                return p;
+    public static boolean exists(String username) {
+        File[] users = accountsDir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File file, String string) {
+                return string.equals(username + ".bin");
             }
-        }
-        return null;
+        });
+        
+        return users.length == 1;
     }
 }

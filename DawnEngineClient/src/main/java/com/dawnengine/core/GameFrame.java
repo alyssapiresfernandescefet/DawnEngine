@@ -2,9 +2,7 @@ package com.dawnengine.core;
 
 import com.dawnengine.game.Game;
 import com.dawnengine.network.Client;
-import com.dawnengine.network.ClientPacketType;
 import javax.swing.JOptionPane;
-import org.json.JSONObject;
 
 public class GameFrame extends javax.swing.JFrame {
 
@@ -12,20 +10,13 @@ public class GameFrame extends javax.swing.JFrame {
 
     private final Game game;
 
-    public GameFrame(int playerID) {
+    public GameFrame(GameData data) {
         instance = this;
         initComponents();
-        game = new Game(playerID);
+        game = new Game(data.getPlayerID(), data.getMapIndex());
         getContentPane().add(game);
-        game.setBounds(10, 10, getContentPane().getWidth() - 10,
-                getContentPane().getHeight() - 10);
-        this.setVisible(true);
-        Client.getClient().sendPacket(ClientPacketType.GAME_READY, 
-                new JSONObject().put("playerID", playerID));
-    }
-
-    public void startGame(int mapIndex) {
-        game.start(mapIndex);
+        game.setBounds(5, 5, getContentPane().getWidth() - 55,
+                getContentPane().getHeight() - 35);
     }
 
     private void exit() {
@@ -41,6 +32,10 @@ public class GameFrame extends javax.swing.JFrame {
 
     public static GameFrame getInstance() {
         return instance;
+    }
+
+    public Game getGame() {
+        return game;
     }
 
     @SuppressWarnings("unchecked")

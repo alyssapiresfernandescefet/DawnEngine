@@ -43,7 +43,7 @@ public class Server extends Listener {
         if (e != null) {
             PlayerManager.save(e);
             var json = new JSONObject();
-            json.put("code", ServerPacket.ENTITY_DESTROY.code);
+            json.put("code", ServerPacketType.ENTITY_DESTROY.code);
             var array = new JSONArray();
             var obj = new JSONObject();
             obj.put("id", e.id());
@@ -58,12 +58,12 @@ public class Server extends Listener {
     public void received(Connection connection, Object object) {
         if (object instanceof String str) {
             if (Utils.isJSONObject(str)) {
-                var obj = new JSONObject(object.toString());
+                var obj = new JSONObject(str);
                 if (!obj.has("code")) {
                     return;
                 }
                 var ctx = new NetworkContext(connection, obj);
-                ClientPacket.get(obj.getInt("code")).event.accept(ctx);
+                ClientPacketType.get(obj.getInt("code")).event.accept(ctx);
             } else if (Utils.isJSONArray(str)) {
                 var arr = new JSONArray(str);
                 for (int i = 0; i < arr.length(); i++) {
@@ -72,7 +72,7 @@ public class Server extends Listener {
                         continue;
                     }
                     var ctx = new NetworkContext(connection, obj);
-                    ClientPacket.get(obj.getInt("code")).event.accept(ctx);
+                    ClientPacketType.get(obj.getInt("code")).event.accept(ctx);
                 }
             }
         }

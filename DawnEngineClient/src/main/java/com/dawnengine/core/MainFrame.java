@@ -28,18 +28,35 @@ public class MainFrame extends javax.swing.JFrame {
                 Settings.getProperty("user.savepassword")));
     }
 
-    public void onLoginComplete(boolean accept, String reason, int playerID) {
-        if (!accept) {
-            JOptionPane.showMessageDialog(this, reason);
+    public void onLoginComplete(JSONObject json) {
+        if (!json.getBoolean("accept")) {
+            JOptionPane.showMessageDialog(this, json.getString("reason"));
             return;
         }
         dispose();
-        GameFrame game = new GameFrame(playerID);
-        game.setVisible(true);
+        var gd = new GameData();
+        gd.setMapIndex(json.getInt("mapIndex"));
+        gd.setPlayerID(json.getInt("playerID"));
+        
+        GameFrame frame = new GameFrame(gd);
+        frame.setVisible(true);
+        frame.getGame().start();
     }
 
-    public void onRegisterComplete(boolean accept, String reason, int playerID) {
-        onLoginComplete(accept, reason, playerID);
+    public void onRegisterComplete(boolean accept, String reason) {
+        if (!accept) {
+            pswRegisterPassword.setText("");
+            pswRegisterConfirmPassword.setText("");
+            JOptionPane.showMessageDialog(this, reason);
+            return;
+        }
+
+        String username = txtLoginUsername.getText();
+        String password = new String(pswLoginPassword.getPassword());
+
+        Client.getClient().sendPacket(ClientPacketType.LOGIN_REQUEST,
+                new JSONObject().put("username", username)
+                        .put("password", password));
     }
 
     public static MainFrame getInstance() {
@@ -474,9 +491,8 @@ public class MainFrame extends javax.swing.JFrame {
         Settings.setProperty("user.name", username);
         Settings.setProperty("user.password", savePassword ? password : "");
         Settings.setProperty("user.savepassword", Boolean.toString(savePassword));
-        pswLoginPassword.setText("");
-        Client client = Client.getClient();
 
+        Client client = Client.getClient();
         try {
             client.openConnection();
         } catch (IOException ex) {
@@ -505,8 +521,6 @@ public class MainFrame extends javax.swing.JFrame {
             return;
         }
 
-        pswRegisterPassword.setText("");
-        pswRegisterConfirmPassword.setText("");
         Client client = Client.getClient();
 
         try {

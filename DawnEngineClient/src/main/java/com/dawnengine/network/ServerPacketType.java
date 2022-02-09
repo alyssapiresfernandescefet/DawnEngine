@@ -18,8 +18,11 @@ public enum ServerPacketType {
     TRANSFORM_UPDATE(0xFFFFF005, ctx -> {
         NetworkEvents.updateTransform(ctx);
     }),
-    GAME_READY_RESPONSE(0xFFFFF006, ctx -> {
-        NetworkEvents.onGameReady(ctx);
+    CHECK_MAP_RESPONSE(0xFFFFF006, ctx -> {
+        NetworkEvents.onCheckMapResponse(ctx);
+    }),
+    GET_MAP_RESPONSE(0xFFFFF007, ctx -> {
+        NetworkEvents.onGetMapResponse(ctx);
     }),
     ;
 

@@ -1,5 +1,6 @@
 package com.dawnengine.core;
 
+import com.dawnengine.managers.MapManager;
 import com.dawnengine.network.Server;
 
 public class ServerFrame extends javax.swing.JFrame {
@@ -9,7 +10,7 @@ public class ServerFrame extends javax.swing.JFrame {
     public ServerFrame() {
         initComponents();
     }
-    
+
     private void exit() {
         Server.close();
         dispose();

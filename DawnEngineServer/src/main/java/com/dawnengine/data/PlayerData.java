@@ -8,22 +8,31 @@ import java.io.Serializable;
  */
 public class PlayerData implements Serializable {
     
-    private final int id;
+    private int id;
     private final Account account;
     private int mapIndex;
     private float posX, posY, scaleX, scaleY;
     private float rotation;
 
+    public PlayerData() {
+        this.id = 0;
+        this.account = null;
+    }
+
     public PlayerData(int playerID, String username, String password) {
         this.account = new Account(username, password);
         this.id = playerID;
-        mapIndex = 0;
+        mapIndex = 1;
         posX = posY = rotation = 0;
         scaleX = scaleY = 1;
     }
 
     public int id() {
         return id;
+    }
+
+    public void id(int id) {
+        this.id = id;
     }
 
     public Account getAccount() {
