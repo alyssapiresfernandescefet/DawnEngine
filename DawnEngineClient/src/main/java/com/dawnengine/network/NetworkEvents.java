@@ -1,5 +1,6 @@
 package com.dawnengine.network;
 
+import com.dawnengine.core.GameFrame;
 import com.dawnengine.core.MainFrame;
 import com.dawnengine.game.Game;
 import com.dawnengine.entity.Entity;
@@ -79,5 +80,10 @@ public final class NetworkEvents {
             
             Game.removeEntity(obj.getInt("id"));
         }
+    }
+    
+    public static void onGameReady(NetworkContext ctx) {
+        GameFrame.getInstance().startGame(ctx.json().getInt("map"));
+        instantiateNewEntity(ctx);
     }
 }

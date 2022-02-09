@@ -1,8 +1,7 @@
 package com.dawnengine.network;
 
-import com.dawnengine.data.Account;
-import com.dawnengine.data.PlayerManager;
-import com.dawnengine.model.NetworkEntity;
+import com.dawnengine.data.PlayerData;
+import com.dawnengine.managers.PlayerManager;
 import com.dawnengine.utils.Encrypter;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -15,11 +14,12 @@ public class NetworkEvents {
 
         String invalidReason = null;
 
-        Account acc = PlayerManager.get(username);
+        PlayerData pd = PlayerManager.load(username);
 
         if (username.isBlank() || password.isBlank()) {
             invalidReason = "Username or password is blank!";
-        } else if (acc == null || !Encrypter.compare(password, acc.password)) {
+        } else if (pd == null || !Encrypter.compare(password,
+                pd.getAccount().password)) {
             invalidReason = "Username or password is invalid!";
         }
 
@@ -30,8 +30,6 @@ public class NetworkEvents {
         obj.put("accept", invalidReason == null);
         if (invalidReason != null) {
             obj.put("reason", invalidReason);
-        } else {
-            instantiateNewPlayer(new NetworkEntity(playerID));
         }
         obj.put("playerID", playerID);
 
@@ -44,11 +42,9 @@ public class NetworkEvents {
 
         String invalidReason = null;
 
-        Account acc = PlayerManager.get(username);
-
         if (username.isBlank() || password.isBlank()) {
             invalidReason = "Username or password is blank!";
-        } else if (acc != null) {
+        } else if (PlayerManager.load(username) != null) {
             invalidReason = "There is already another player with this username!";
         }
 
@@ -56,9 +52,8 @@ public class NetworkEvents {
         JSONObject obj = new JSONObject();
 
         if (invalidReason == null) {
-            String hashedPass = Encrypter.encrypt(password);
-            PlayerManager.set(username, hashedPass);
-            instantiateNewPlayer(new NetworkEntity(playerID));
+            var pd = new PlayerData(playerID, username, Encrypter.encrypt(password));
+            PlayerManager.save(pd);
         } else {
             obj.put("reason", invalidReason);
         }
@@ -73,12 +68,12 @@ public class NetworkEvents {
     public static void onPlayerTransformUpdate(NetworkContext ctx) {
         var json = ctx.json;
 
-        var entity = Server.entities.get(ctx.connection.getID());
-        entity.setPosX(json.getFloat("posX"));
-        entity.setPosY(json.getFloat("posY"));
-        entity.setScaleX(json.getFloat("scaX"));
-        entity.setScaleY(json.getFloat("scaY"));
-        entity.setRotation(json.getFloat("rot"));
+        PlayerData pd = Server.getPlayer(ctx.connection.getID());
+        pd.setPosX(json.getFloat("posX"));
+        pd.setPosY(json.getFloat("posY"));
+        pd.setScaleX(json.getFloat("scaX"));
+        pd.setScaleY(json.getFloat("scaY"));
+        pd.setRotation(json.getFloat("rot"));
 
         json.remove("code");
         json.put("code", ServerPacket.TRANSFORM_UPDATE.code);
@@ -86,15 +81,15 @@ public class NetworkEvents {
                 ctx.connection.getID(), json.toString());
     }
 
-    private static void instantiateNewPlayer(NetworkEntity entity) {
-        Server.entities.put(entity.id(), entity);
+    public static void onNewPlayer(NetworkContext ctx) {
+        var player = PlayerManager.getCachedPlayer(ctx.json.getInt("playerID"));
 
         var json = new JSONObject();
         json.put("code", ServerPacket.ENTITY_INSTANCE.code);
 
         var array = new JSONArray();
         var obj = new JSONObject();
-        obj.put("id", entity.id());
+        obj.put("id", player.id());
         obj.put("posX", 0);
         obj.put("posY", 0);
         obj.put("scaX", 1);
@@ -102,15 +97,16 @@ public class NetworkEvents {
         obj.put("rot", 0);
         array.put(obj);
         json.put("entities", array);
-
-        Server.getServer().sendToAllExceptTCP(
-                entity.id(), json.toString());
+        
+        Server.getServer().sendToMapTCP(player.getMapIndex(), json.toString());
+        Server.addPlayer(player);
 
         json = new JSONObject();
-        json.put("code", ServerPacket.ENTITY_INSTANCE.code);
+        json.put("code", ServerPacket.GAME_READY_RESPONSE.code);
+        json.put("map", player.getMapIndex());
 
         array = new JSONArray();
-        for (var en : Server.entities.values()) {
+        for (var en : Server.getAllPlayers()) {
             obj = new JSONObject();
             obj.put("id", en.id());
             obj.put("posX", en.getPosX());
@@ -122,6 +118,6 @@ public class NetworkEvents {
         }
         json.put("entities", array);
 
-        Server.getServer().sendToTCP(entity.id(), json.toString());
+        Server.getServer().sendToTCP(player.id(), json.toString());
     }
 }

@@ -13,6 +13,9 @@ public enum ClientPacket {
     TRANSFORM_UPDATE(0xCFFFF003, ctx -> {
         NetworkEvents.onPlayerTransformUpdate(ctx);
     }),
+    GAME_READY(0xCFFFF004, ctx -> {
+        NetworkEvents.onNewPlayer(ctx);
+    }),
     ;
 
     public final int code;

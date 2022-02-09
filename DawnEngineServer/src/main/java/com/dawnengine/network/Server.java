@@ -1,10 +1,12 @@
 package com.dawnengine.network;
 
-import com.dawnengine.model.NetworkEntity;
+import com.dawnengine.data.PlayerData;
+import com.dawnengine.managers.PlayerManager;
 import com.dawnengine.utils.Utils;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -16,7 +18,7 @@ public class Server extends Listener {
     private static Server server;
     private com.esotericsoftware.kryonet.Server socket;
 
-    public static final HashMap<Integer, NetworkEntity> entities = new HashMap<>();
+    private static final HashMap<Integer, PlayerData> players = new HashMap<>();
 
     private Server() throws IOException {
         socket = new com.esotericsoftware.kryonet.Server();
@@ -37,8 +39,9 @@ public class Server extends Listener {
 
     @Override
     public void disconnected(Connection connection) {
-        NetworkEntity e = entities.remove(connection.getID());
+        PlayerData e = players.remove(connection.getID());
         if (e != null) {
+            PlayerManager.save(e);
             var json = new JSONObject();
             json.put("code", ServerPacket.ENTITY_DESTROY.code);
             var array = new JSONArray();
@@ -99,6 +102,14 @@ public class Server extends Listener {
         socket.sendToUDP(connectionID, object);
     }
 
+    public void sendToMapTCP(int mapIndex, String object) {
+        Server.players.values().forEach(p -> {
+            if (p.getMapIndex() == mapIndex) {
+                sendToTCP(p.id(), object);
+            }
+        });
+    }
+
     public static void open() {
         getServer().socket.start();
     }
@@ -106,5 +117,25 @@ public class Server extends Listener {
     public static void close() {
         getServer().socket.stop();
         getServer().socket.close();
+    }
+    
+    public static Collection<PlayerData> getAllPlayers() {
+        return players.values();
+    }
+    
+    public static PlayerData getPlayer(int id) {
+        return players.get(id);
+    }
+    
+    public static boolean addPlayer(PlayerData p) {
+        return players.put(p.id(), p) != null;
+    }
+    
+    public static boolean removePlayer(PlayerData p) {
+        return players.remove(p.id(), p);
+    }
+    
+    public static boolean removePlayer(int id) {
+        return players.remove(id) != null;
     }
 }

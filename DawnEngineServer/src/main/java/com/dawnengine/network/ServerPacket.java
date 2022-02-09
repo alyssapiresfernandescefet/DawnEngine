@@ -6,6 +6,7 @@ public enum ServerPacket {
     ENTITY_INSTANCE(0xFFFFF003),
     ENTITY_DESTROY(0xFFFFF004),
     TRANSFORM_UPDATE(0xFFFFF005),
+    GAME_READY_RESPONSE(0xFFFFF006),
     ;
 
     public final int code;

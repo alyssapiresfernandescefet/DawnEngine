@@ -1,10 +1,12 @@
 package com.dawnengine.data;
 
+import java.io.Serializable;
+
 /**
  *
  * @author alyss
  */
-public class Account {
+public class Account implements Serializable {
 
     public final String username, password;
 

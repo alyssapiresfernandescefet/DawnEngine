@@ -17,7 +17,11 @@ public enum ServerPacketType {
     }),
     TRANSFORM_UPDATE(0xFFFFF005, ctx -> {
         NetworkEvents.updateTransform(ctx);
-    }),;
+    }),
+    GAME_READY_RESPONSE(0xFFFFF006, ctx -> {
+        NetworkEvents.onGameReady(ctx);
+    }),
+    ;
 
     public final int code;
     public final Consumer<NetworkContext> event;

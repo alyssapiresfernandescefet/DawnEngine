@@ -3,6 +3,7 @@ package com.dawnengine.game;
 import com.dawnengine.entity.Entity;
 import com.dawnengine.entity.LocalPlayer;
 import com.dawnengine.game.map.Map;
+import com.dawnengine.game.map.MapLoader;
 import com.dawnengine.math.Vector2;
 import java.awt.Canvas;
 import java.awt.Color;
@@ -34,7 +35,8 @@ public class Game extends Canvas implements GameEvents {
         addEntity(lp);
     }
 
-    public void start() {
+    public void start(int mapIndex) {
+        map = MapLoader.load(mapIndex);
         this.createBufferStrategy(3);
         loop.start();
     }

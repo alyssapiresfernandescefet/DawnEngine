@@ -10,10 +10,11 @@ import org.json.JSONObject;
 public class Client extends Listener {
 
     private static Client client;
+
     static {
         client = new Client();
     }
-    
+
     private com.esotericsoftware.kryonet.Client socket;
 
     private Client() {
@@ -59,6 +60,9 @@ public class Client extends Listener {
     }
 
     public void sendPacket(ClientPacketType type, JSONObject obj) {
+        if (obj == null) {
+            throw new NullPointerException();
+        }
         obj.put("code", type.code);
         switch (type.route) {
             case "TCP":
