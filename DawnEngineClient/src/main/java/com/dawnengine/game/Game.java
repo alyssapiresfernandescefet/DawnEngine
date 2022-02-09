@@ -99,8 +99,8 @@ public class Game extends Canvas implements GameEvents {
         map.setTileCountX(json.getInt("sizeX"));
         map.setTileCountY(json.getInt("sizeY"));
         map.setLastRevision(json.getLong("lastRevision"));
-        map.setTilesFromString(json.getString("tiles"));
-        MapLoader.saveAsync(json.getInt("mapIndex"), map);
+        map.loadTilesFromString(json.getString("tiles"));
+        MapLoader.save(json.getInt("mapIndex"), map);
         this.map = map;
     }
 

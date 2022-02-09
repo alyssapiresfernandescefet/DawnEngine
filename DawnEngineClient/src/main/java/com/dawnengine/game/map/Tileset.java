@@ -63,11 +63,11 @@ public class Tileset {
         return tileset.getHeight() / Tile.TILE_SIZE_Y;
     }
 
-    public Image getImageTile(int index) {
+    public BufferedImage getImageTile(int index) {
         return getImageTile(index % getTileCountX(), index / getTileCountX());
     }
 
-    public Image getImageTile(int x, int y) {
+    public BufferedImage getImageTile(int x, int y) {
         if (x < 0 || x >= getTileCountX() || y >= getTileCountY() || y < 0) {
             return null;
         }

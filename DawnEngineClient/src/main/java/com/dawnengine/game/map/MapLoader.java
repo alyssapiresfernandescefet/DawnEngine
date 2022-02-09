@@ -1,7 +1,15 @@
 package com.dawnengine.game.map;
 
+import com.dawnengine.utils.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -24,10 +32,29 @@ public class MapLoader {
                 return string.equals("map" + index + ".map");
             }
         });
-        return null;
+
+        Map map = null;
+        if (maps.length == 0) {
+            return map;
+        }
+
+        try (var in = new Input(new FileInputStream(maps[0]))) {
+            map = Serializer.readObject(in, Map.class);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(MapLoader.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return map;
     }
-    
-    public static void saveAsync(int mapIndex, Map map) {
-        
+
+    public static boolean save(int mapIndex, Map map) {
+        File f = new File(mapsDir, "map" + mapIndex + ".map");
+        try (var out = new Output(new FileOutputStream(f))) {
+            Serializer.writeObject(out, map);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(MapLoader.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+        return true;
     }
 }

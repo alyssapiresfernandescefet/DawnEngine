@@ -61,10 +61,10 @@ public class Map implements Serializable {
     }
 
     public ArrayList<Tile> getTiles(TileLayer layer) {
-        return tiles[layer.order];
+        return tiles[layer.index];
     }
 
-    public void setTilesFromString(String tiles) {
+    public void loadTilesFromString(String tiles) {
         String[] tilesArr = tiles.split("_");
         this.tiles = new ArrayList[]{
             new ArrayList(),
@@ -77,8 +77,8 @@ public class Map implements Serializable {
         var tilesetMap = new HashMap<Integer, Tileset>();
         for (int i = 0; i < tilesArr.length; i++) {
             var split = tilesArr[i].split("x");
-            var layer = TileLayer.get(split[0]);
-            var index = Integer.parseInt(split[1]);
+            var layer = TileLayer.codeToLayer(split[0]);
+            var mapLocationIndex = Integer.parseInt(split[1]);
             var tilesetIndex = Integer.parseInt(split[2]);
             var tileIndex = Integer.parseInt(split[3]);
 
@@ -89,10 +89,25 @@ public class Map implements Serializable {
             } else {
                 tileset = tilesetMap.get(tilesetIndex);
             }
-
-            this.tiles[layer.order]
-                    .add(new Tile(index, tileset.getImageTile(tileIndex)));
+            var tile = new Tile(layer, tilesetIndex, tileIndex, mapLocationIndex,
+                    tileset.getImageTile(tileIndex));
+            this.tiles[layer.index].add(tile);
         }
+    }
+
+    public String convertTilesToString() {
+        String str = "";
+        for (int i = 0; i < tiles.length; i++) {
+            var layer = tiles[i];
+            for (int j = 0; j < layer.size(); j++) {
+                var tile = layer.get(i);
+                str += tile.getLayer().code + "x"
+                        + tile.getIndexOnMap() + "x"
+                        + tile.getTilesetIndex() + "x"
+                        + tile.getIndexOnTileset() + "_";
+            }
+        }
+        return str.substring(0, str.length() - 1);
     }
 
 }

@@ -150,13 +150,13 @@ public class Camera {
             var width = map.getTileCountX();
             for (int i = 0; i < tiles.size(); i++) {
                 var tile = tiles.get(i);
-                var img = tile.sprite();
+                var img = tile.getSprite();
                 if (img == null) {
                     continue;
                 }
                 g.drawImage(img,
-                        tile.getWidth() * (tile.getIndex() % width),
-                        tile.getHeight() * (tile.getIndex() / width),
+                        tile.getWidth() * (tile.getIndexOnMap() % width),
+                        tile.getHeight() * (tile.getIndexOnMap() / width),
                         null);
             }
         }
