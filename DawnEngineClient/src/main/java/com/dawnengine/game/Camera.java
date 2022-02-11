@@ -3,6 +3,7 @@ package com.dawnengine.game;
 import com.dawnengine.entity.Transform;
 import com.dawnengine.entity.Entity;
 import com.dawnengine.game.map.Map;
+import com.dawnengine.game.map.Tile;
 import com.dawnengine.game.map.TileLayer;
 import com.dawnengine.math.Vector2;
 import java.awt.Canvas;
@@ -147,7 +148,7 @@ public class Camera {
 
         for (TileLayer layer : TileLayer.values()) {
             var tiles = map.getTiles(layer);
-            var width = map.getTileCountX();
+            var sizeX = map.getTileCountX();
             for (int i = 0; i < tiles.size(); i++) {
                 var tile = tiles.get(i);
                 var img = tile.getSprite();
@@ -155,8 +156,8 @@ public class Camera {
                     continue;
                 }
                 g.drawImage(img,
-                        tile.getWidth() * (tile.getIndexOnMap() % width),
-                        tile.getHeight() * (tile.getIndexOnMap() / width),
+                        Tile.SIZE_X * (tile.getIndexOnMap() % sizeX),
+                        Tile.SIZE_Y * (tile.getIndexOnMap() / sizeX),
                         null);
             }
         }

@@ -1,6 +1,5 @@
 package com.dawnengine.game.map;
 
-import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FilenameFilter;
@@ -24,7 +23,7 @@ public class Tileset {
         }
     }
 
-    private BufferedImage tileset;
+    private final BufferedImage tileset;
 
     public Tileset(BufferedImage tileset) {
         this.tileset = tileset;
@@ -38,29 +37,48 @@ public class Tileset {
             }
         });
 
-        Tileset tileset = new Tileset(new BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB));
+        Tileset tileset = new Tileset(
+                new BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB));
         if (tilesets.length == 0) {
             return tileset;
         }
 
+        return load(tilesets[0]);
+
+    }
+
+    public static Tileset load(File file) {
+        Tileset tileset = null;
         try {
-            tileset = new Tileset(ImageIO.read(tilesets[0]));
+            tileset = new Tileset(ImageIO.read(file));
         } catch (IOException ex) {
             Logger.getLogger(Tileset.class.getName()).log(Level.SEVERE, null, ex);
         }
         return tileset;
     }
 
-    public Image getTileset() {
+    public static File[] listAll() {
+        return tilesetsDir.listFiles();
+    }
+
+    public BufferedImage getTileset() {
         return tileset;
     }
 
     public int getTileCountX() {
-        return tileset.getWidth() / Tile.TILE_SIZE_X;
+        return tileset.getWidth() / Tile.SIZE_X;
     }
 
     public int getTileCountY() {
-        return tileset.getHeight() / Tile.TILE_SIZE_Y;
+        return tileset.getHeight() / Tile.SIZE_Y;
+    }
+
+    public int getWidth() {
+        return tileset.getWidth();
+    }
+
+    public int getHeight() {
+        return tileset.getHeight();
     }
 
     public BufferedImage getImageTile(int index) {
@@ -71,10 +89,9 @@ public class Tileset {
         if (x < 0 || x >= getTileCountX() || y >= getTileCountY() || y < 0) {
             return null;
         }
-        var img = tileset.getSubimage(
-                Tile.TILE_SIZE_X * x,
-                Tile.TILE_SIZE_Y * y,
-                Tile.TILE_SIZE_X, Tile.TILE_SIZE_Y
+        var img = tileset.getSubimage(Tile.SIZE_X * x,
+                Tile.SIZE_Y * y,
+                Tile.SIZE_X, Tile.SIZE_Y
         );
         return img;
     }

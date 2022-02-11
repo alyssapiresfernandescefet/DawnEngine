@@ -24,9 +24,11 @@ public class NetworkEvents {
                 player.getAccount().password)) {
             invalidReason = "Username or password is invalid!";
         }
-        
+
         int playerID = ctx.connection().getID();
-        player.id(playerID);
+        if (player != null) {
+            player.id(playerID);
+        }
         var responseJSON = new JSONObject();
 
         responseJSON.put("code", ServerPacketType.LOGIN_RESPONSE.code);
@@ -74,8 +76,6 @@ public class NetworkEvents {
 
             Server.addPlayer(player);
             Server.getServer().sendToTCP(player.id(), responseJSON.toString());
-            System.out.println(player.id());
-            System.out.println(responseJSON);
         }
     }
 
@@ -122,11 +122,11 @@ public class NetworkEvents {
         Server.getServer().sendToAllExceptUDP(
                 ctx.connection().getID(), json.toString());
     }
-    
+
     public static void onCheckMap(NetworkContext ctx) {
         var index = ctx.json().getInt("mapIndex");
         var map = MapManager.load(index);
-        Server.getServer().sendToTCP(ctx.connection().getID(), 
+        Server.getServer().sendToTCP(ctx.connection().getID(),
                 new JSONObject()
                         .put("code", ServerPacketType.CHECK_MAP_RESPONSE.code)
                         .put("lastRevision", map.getLastRevision())
@@ -138,14 +138,14 @@ public class NetworkEvents {
         MapData map = MapManager.load(index);
         var json = new JSONObject();
         json.put("code", ServerPacketType.GET_MAP_RESPONSE.code);
-        
+
         json.put("name", map.getName());
         json.put("sizeX", map.getSizeX());
         json.put("sizeY", map.getSizeY());
         json.put("lastRevision", map.getLastRevision());
         json.put("tiles", map.getTilesAsString());
         json.put("mapIndex", index);
-        
+
         Server.getServer().sendToTCP(ctx.connection().getID(), json.toString());
     }
 }

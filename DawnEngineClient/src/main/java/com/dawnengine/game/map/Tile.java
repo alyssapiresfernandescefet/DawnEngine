@@ -1,6 +1,5 @@
 package com.dawnengine.game.map;
 
-import com.dawnengine.entity.Sprite;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.Serializable;
@@ -11,7 +10,7 @@ import java.io.Serializable;
  */
 public class Tile implements Serializable {
 
-    public static final int TILE_SIZE_X = 32, TILE_SIZE_Y = 32;
+    public static final int SIZE_X = 32, SIZE_Y = 32;
 
     private final TileLayer layer;
     private final int tilesetIndex, tileIndex;
@@ -41,18 +40,10 @@ public class Tile implements Serializable {
 
     public Image getSprite() {
         if (sprite == null) {
-            sprite = new BufferedImage(TILE_SIZE_X, TILE_SIZE_Y, BufferedImage.TYPE_INT_RGB);
-            sprite.setRGB(0, 0, TILE_SIZE_X, TILE_SIZE_Y, spriteArray, 0, TILE_SIZE_X);
+            sprite = new BufferedImage(SIZE_X, SIZE_Y, BufferedImage.TYPE_INT_RGB);
+            sprite.setRGB(0, 0, SIZE_X, SIZE_Y, spriteArray, 0, SIZE_X);
         }
         return sprite;
-    }
-
-    public int getWidth() {
-        return TILE_SIZE_X;
-    }
-
-    public int getHeight() {
-        return TILE_SIZE_Y;
     }
 
     /**

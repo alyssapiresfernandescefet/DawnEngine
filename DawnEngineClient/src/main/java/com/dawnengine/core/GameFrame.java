@@ -3,6 +3,7 @@ package com.dawnengine.core;
 import com.dawnengine.game.Game;
 import com.dawnengine.network.Client;
 import javax.swing.JOptionPane;
+import org.json.JSONObject;
 
 public class GameFrame extends javax.swing.JFrame {
 
@@ -10,21 +11,21 @@ public class GameFrame extends javax.swing.JFrame {
 
     private final Game game;
 
-    public GameFrame(GameData data) {
+    public GameFrame(JSONObject config) {
         instance = this;
         initComponents();
-        game = new Game(data.getPlayerID(), data.getMapIndex());
+        game = new Game(config);
         getContentPane().add(game);
         game.setBounds(5, 5, getContentPane().getWidth() - 55,
                 getContentPane().getHeight() - 35);
     }
 
     private void exit() {
-        int opt = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to exit?", "Exit?", JOptionPane.YES_NO_OPTION);
-        if (opt == JOptionPane.NO_OPTION) {
-            return;
-        }
+//        int opt = JOptionPane.showConfirmDialog(this,
+//                "Are you sure you want to exit?", "Exit?", JOptionPane.YES_NO_OPTION);
+//        if (opt == JOptionPane.NO_OPTION) {
+//            return;
+//        }
         dispose();
         Client.getClient().closeConnection();
         game.stop();

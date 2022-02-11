@@ -52,14 +52,6 @@ public class Map implements Serializable {
         this.tileCountY = tileCountY;
     }
 
-    public int getWidth() {
-        return getTileCountX() * Tile.TILE_SIZE_X;
-    }
-
-    public int getHeight() {
-        return getTileCountY() * Tile.TILE_SIZE_Y;
-    }
-
     public ArrayList<Tile> getTiles(TileLayer layer) {
         return tiles[layer.index];
     }

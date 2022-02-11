@@ -34,11 +34,8 @@ public class MainFrame extends javax.swing.JFrame {
             return;
         }
         dispose();
-        var gd = new GameData();
-        gd.setMapIndex(json.getInt("mapIndex"));
-        gd.setPlayerID(json.getInt("playerID"));
         
-        GameFrame frame = new GameFrame(gd);
+        GameFrame frame = new GameFrame(json);
         frame.setVisible(true);
         frame.getGame().start();
     }

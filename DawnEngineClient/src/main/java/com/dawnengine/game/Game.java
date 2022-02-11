@@ -1,5 +1,6 @@
 package com.dawnengine.game;
 
+import com.dawnengine.editor.AdministratorFrame;
 import com.dawnengine.entity.Entity;
 import com.dawnengine.entity.LocalPlayer;
 import com.dawnengine.game.map.Map;
@@ -9,6 +10,7 @@ import com.dawnengine.network.Client;
 import com.dawnengine.network.ClientPacketType;
 import java.awt.Canvas;
 import java.awt.Color;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import org.json.JSONObject;
@@ -24,8 +26,9 @@ public class Game extends Canvas implements GameEvents {
     private static final HashMap<Integer, Entity> entitiesMap = new HashMap<>();
 
     private LocalPlayer lp;
+    private final AdministratorFrame adminFrame;
 
-    public Game(int playerID, int mapIndex) {
+    public Game(JSONObject config) {
         this.setBackground(Color.MAGENTA);
         input = new Input();
         this.addKeyListener(input);
@@ -34,11 +37,22 @@ public class Game extends Canvas implements GameEvents {
 
         loop = new GameLoop(this);
         mainCamera = new Camera(this);
+        adminFrame = new AdministratorFrame(this);
+
+        var arr = config.getJSONArray("entities");
+        for (int i = 0; i < arr.length(); i++) {
+            var obj = arr.getJSONObject(i);
+            var id = obj.getInt("id");
+            var position = new Vector2(obj.getFloat("posX"), obj.getFloat("posY"));
+            var scale = new Vector2(obj.getFloat("scaX"), obj.getFloat("scaY"));
+            var rotation = obj.getFloat("rot");
+            addEntity(new Entity(id, position, scale, rotation));
+        }
 
         Client.getClient().sendPacket(ClientPacketType.CHECK_MAP_REQUEST,
-                new JSONObject().put("mapIndex", mapIndex));
+                new JSONObject().put("mapIndex", config.get("mapIndex")));
 
-        lp = new LocalPlayer(playerID, Vector2.zero());
+        lp = new LocalPlayer(config.getInt("playerID"), Vector2.zero());
         addEntity(lp);
     }
 
@@ -48,6 +62,7 @@ public class Game extends Canvas implements GameEvents {
     }
 
     public void stop() {
+        adminFrame.dispose();
         loop.stop();
     }
 
@@ -63,6 +78,12 @@ public class Game extends Canvas implements GameEvents {
         for (Entity entity : entities) {
             entity.update(dt);
         }
+        
+        if (Input.getKeyDown(KeyEvent.VK_INSERT)) {
+            adminFrame.setVisible(!adminFrame.isVisible());
+        }
+        
+        Input.update();
     }
 
     @Override
@@ -70,7 +91,6 @@ public class Game extends Canvas implements GameEvents {
         for (Entity entity : entities) {
             entity.networkUpdate();
         }
-        Input.update();
     }
 
     @Override
@@ -82,17 +102,17 @@ public class Game extends Canvas implements GameEvents {
         }
         mainCamera.end();
     }
-    
+
     public void onCheckMapReceived(int mapIndex, long serverLastRevision) {
         var map = MapLoader.load(mapIndex);
         if (map != null && map.getLastRevision() == serverLastRevision) {
             this.map = map;
             return;
         }
-        Client.getClient().sendPacket(ClientPacketType.GET_MAP_REQUEST, 
+        Client.getClient().sendPacket(ClientPacketType.GET_MAP_REQUEST,
                 new JSONObject().put("mapIndex", mapIndex));
     }
-    
+
     public void onGetMapReceived(JSONObject json) {
         var map = new Map();
         map.setName(json.getString("name"));
