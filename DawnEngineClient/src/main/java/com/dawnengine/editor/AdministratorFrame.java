@@ -1,15 +1,18 @@
 package com.dawnengine.editor;
 
+import com.dawnengine.game.Camera;
 import com.dawnengine.game.Game;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 
 public class AdministratorFrame extends javax.swing.JFrame {
 
     private int xPress, yPress, xDrag, yDrag;
     private final Game game;
-    private JFrame openEditor;
+    private Editor openEditor;
 
     public AdministratorFrame(Game game) {
         initComponents();
@@ -34,6 +37,20 @@ public class AdministratorFrame extends javax.swing.JFrame {
                 yPress = e.getY();
             }
         });
+    }
+
+    public void updateEditor() {
+        if (openEditor == null) {
+            return;
+        }
+        openEditor.update();
+    }
+
+    public void renderEditor(Camera cam) {
+        if (openEditor == null) {
+            return;
+        }
+        openEditor.render(cam);
     }
 
     @Override
@@ -101,13 +118,21 @@ public class AdministratorFrame extends javax.swing.JFrame {
         if (openEditor instanceof MapEditor) {
             openEditor.setAlwaysOnTop(true);
             openEditor.setAlwaysOnTop(false);
-        } else {
-            if (openEditor != null) {
-                openEditor.dispose();
-            }
-            openEditor = new MapEditor();
-            openEditor.setVisible(true);
+            return;
         }
+
+        if (openEditor != null) {
+            openEditor.dispose();
+        }
+
+        openEditor = new MapEditor(game);
+        openEditor.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                openEditor = null;
+            }
+        });
+        openEditor.setVisible(true);
     }//GEN-LAST:event_btnMapEditorActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

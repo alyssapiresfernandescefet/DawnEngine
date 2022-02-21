@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  */
 public class MapManager {
 
-    private static final int DEF_MAP_WIDTH = 25, DEF_MAP_HEIGHT = 18;
+    private static final int DEF_MAP_WIDTH = 30, DEF_MAP_HEIGHT = 20;
 
     private static final File mapsDir = new File("data/maps/");
 

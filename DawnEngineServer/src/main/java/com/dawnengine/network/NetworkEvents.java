@@ -143,7 +143,7 @@ public class NetworkEvents {
         json.put("sizeX", map.getSizeX());
         json.put("sizeY", map.getSizeY());
         json.put("lastRevision", map.getLastRevision());
-        json.put("tiles", map.getTilesAsString());
+        json.put("tiles", map.getTiles());
         json.put("mapIndex", index);
 
         Server.getServer().sendToTCP(ctx.connection().getID(), json.toString());

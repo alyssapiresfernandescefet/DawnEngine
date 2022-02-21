@@ -12,7 +12,7 @@ public class MapData implements Serializable {
     private String name;
     private long lastRevision;
     private int sizeX, sizeY;
-    private String[] tiles;
+    private String tiles;
 
     public MapData() {
     }
@@ -22,11 +22,12 @@ public class MapData implements Serializable {
         this.sizeX = sizeX;
         this.sizeY = sizeY;
         this.lastRevision = new Date().getTime();
-
-        this.tiles = new String[this.sizeX * this.sizeY];
-        for (int i = 0; i < tiles.length; i++) {
-            this.tiles[i] = "gx" + i + "x1x8";
+        var length = this.sizeX * this.sizeY;
+        this.tiles = "";
+        for (int i = 0; i < length - 1; i++) {
+            this.tiles += "0x" + i + "x1x4_";
         }
+        this.tiles += "0x" + (length - 1) + "x1x4";
     }
 
     public String getName() {
@@ -61,32 +62,7 @@ public class MapData implements Serializable {
         this.sizeY = sizeY;
     }
 
-    public String[] getTiles() {
+    public String getTiles() {
         return tiles;
     }
-
-    public String getTile(int index) {
-        return tiles[index];
-    }
-
-    public void setTile(int index, String tile) {
-        tiles[index] = tile;
-    }
-
-    public String getTilesAsString() {
-        String str = "";
-        for (int i = 0; i < tiles.length - 1; i++) {
-            str += tiles[i] + "_";
-        }
-        str += tiles[tiles.length - 1];
-        return str;
-    }
-
-    @Override
-    public String toString() {
-        return "MapData{" + "mapName=" + name + ", lastRevision="
-                + lastRevision + ", mapSizeX=" + sizeX + ", mapSizeY="
-                + sizeY + '}';
-    }
-
 }

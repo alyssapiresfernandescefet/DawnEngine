@@ -1,10 +1,12 @@
 package com.dawnengine.math;
 
+import java.io.Serializable;
+
 /**
  *
  * @author alyss
  */
-public class Vector2 {
+public class Vector2 implements Serializable {
 
     public float x, y;
 
@@ -49,6 +51,35 @@ public class Vector2 {
     public Vector2(Vector2 other) {
         this.x = other.x;
         this.y = other.y;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 37 * hash + Float.floatToIntBits(this.x);
+        hash = 37 * hash + Float.floatToIntBits(this.y);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Vector2 other = (Vector2) obj;
+        if (Float.floatToIntBits(this.x) != Float.floatToIntBits(other.x)) {
+            return false;
+        }
+        if (Float.floatToIntBits(this.y) != Float.floatToIntBits(other.y)) {
+            return false;
+        }
+        return true;
     }
 
     @Override

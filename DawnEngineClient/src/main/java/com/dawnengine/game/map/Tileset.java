@@ -14,55 +14,24 @@ import javax.imageio.ImageIO;
  */
 public class Tileset {
 
-    private static final File tilesetsDir
-            = new File("data files/graphics/tilesets/");
+    private final int num;
+    private BufferedImage tileset;
 
-    static {
-        if (!tilesetsDir.exists()) {
-            tilesetsDir.mkdirs();
-        }
-    }
-
-    private final BufferedImage tileset;
-
-    public Tileset(BufferedImage tileset) {
+    public Tileset(int num, BufferedImage tileset) {
+        this.num = num;
         this.tileset = tileset;
     }
 
-    public static Tileset load(int index) {
-        File[] tilesets = tilesetsDir.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File file, String string) {
-                return string.startsWith(Integer.toString(index));
-            }
-        });
-
-        Tileset tileset = new Tileset(
-                new BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB));
-        if (tilesets.length == 0) {
-            return tileset;
-        }
-
-        return load(tilesets[0]);
-
+    public int getNum() {
+        return num;
     }
 
-    public static Tileset load(File file) {
-        Tileset tileset = null;
-        try {
-            tileset = new Tileset(ImageIO.read(file));
-        } catch (IOException ex) {
-            Logger.getLogger(Tileset.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public BufferedImage getImage() {
         return tileset;
     }
 
-    public static File[] listAll() {
-        return tilesetsDir.listFiles();
-    }
-
-    public BufferedImage getTileset() {
-        return tileset;
+    public void setImage(BufferedImage image) {
+        this.tileset = image;
     }
 
     public int getTileCountX() {
@@ -81,10 +50,6 @@ public class Tileset {
         return tileset.getHeight();
     }
 
-    public BufferedImage getImageTile(int index) {
-        return getImageTile(index % getTileCountX(), index / getTileCountX());
-    }
-
     public BufferedImage getImageTile(int x, int y) {
         if (x < 0 || x >= getTileCountX() || y >= getTileCountY() || y < 0) {
             return null;
@@ -94,6 +59,10 @@ public class Tileset {
                 Tile.SIZE_X, Tile.SIZE_Y
         );
         return img;
+    }
+
+    public BufferedImage getImageTile(int index) {
+        return getImageTile(index % getTileCountX(), index / getTileCountX());
     }
 
 }

@@ -4,12 +4,12 @@ import com.dawnengine.editor.AdministratorFrame;
 import com.dawnengine.entity.Entity;
 import com.dawnengine.entity.LocalPlayer;
 import com.dawnengine.game.map.Map;
-import com.dawnengine.game.map.MapLoader;
+import com.dawnengine.serializers.objects.MapData;
+import com.dawnengine.serializers.MapSerializer;
 import com.dawnengine.math.Vector2;
 import com.dawnengine.network.Client;
 import com.dawnengine.network.ClientPacketType;
 import java.awt.Canvas;
-import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,17 +28,19 @@ public class Game extends Canvas implements GameEvents {
     private LocalPlayer lp;
     private final AdministratorFrame adminFrame;
 
-    public Game(JSONObject config) {
-        this.setBackground(Color.MAGENTA);
-        input = new Input();
-        this.addKeyListener(input);
-        this.addMouseListener(input);
-        this.addFocusListener(input);
-
+    public Game() {
         loop = new GameLoop(this);
         mainCamera = new Camera(this);
         adminFrame = new AdministratorFrame(this);
 
+        input = Input.getInstance(mainCamera);
+        this.addKeyListener(input);
+        this.addMouseMotionListener(input);
+        this.addMouseListener(input);
+        this.addFocusListener(input);
+    }
+
+    public void start(JSONObject config) {
         var arr = config.getJSONArray("entities");
         for (int i = 0; i < arr.length(); i++) {
             var obj = arr.getJSONObject(i);
@@ -54,11 +56,10 @@ public class Game extends Canvas implements GameEvents {
 
         lp = new LocalPlayer(config.getInt("playerID"), Vector2.zero());
         addEntity(lp);
-    }
 
-    public void start() {
         this.createBufferStrategy(3);
         loop.start();
+        requestFocus();
     }
 
     public void stop() {
@@ -78,11 +79,13 @@ public class Game extends Canvas implements GameEvents {
         for (Entity entity : entities) {
             entity.update(dt);
         }
-        
+
         if (Input.getKeyDown(KeyEvent.VK_INSERT)) {
             adminFrame.setVisible(!adminFrame.isVisible());
         }
-        
+
+        adminFrame.updateEditor();
+
         Input.update();
     }
 
@@ -96,17 +99,22 @@ public class Game extends Canvas implements GameEvents {
     @Override
     public void onRender() {
         mainCamera.begin();
+
         mainCamera.drawMap(map);
+
         for (Entity entity : entities) {
             mainCamera.drawEntity(entity);
         }
+
+        adminFrame.renderEditor(mainCamera);
+
         mainCamera.end();
     }
 
     public void onCheckMapReceived(int mapIndex, long serverLastRevision) {
-        var map = MapLoader.load(mapIndex);
-        if (map != null && map.getLastRevision() == serverLastRevision) {
-            this.map = map;
+        var mapData = MapSerializer.load(mapIndex);
+        if (mapData != null && mapData.getLastRevision() == serverLastRevision) {
+            this.map = new Map(mapData);
             return;
         }
         Client.getClient().sendPacket(ClientPacketType.GET_MAP_REQUEST,
@@ -114,13 +122,18 @@ public class Game extends Canvas implements GameEvents {
     }
 
     public void onGetMapReceived(JSONObject json) {
-        var map = new Map();
-        map.setName(json.getString("name"));
-        map.setTileCountX(json.getInt("sizeX"));
-        map.setTileCountY(json.getInt("sizeY"));
-        map.setLastRevision(json.getLong("lastRevision"));
-        map.loadTilesFromString(json.getString("tiles"));
-        MapLoader.save(json.getInt("mapIndex"), map);
+        var index = json.getInt("mapIndex");
+        var mapData = new MapData(json.getString("name"), json.getInt("sizeX"),
+                json.getInt("sizeY"), json.getLong("lastRevision"), json.getString("tiles"));
+        this.map = new Map(mapData);
+        MapSerializer.save(index, mapData);
+    }
+
+    public Map getMap() {
+        return map;
+    }
+
+    public void setMap(Map map) {
         this.map = map;
     }
 

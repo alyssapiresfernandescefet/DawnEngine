@@ -1,6 +1,5 @@
 package com.dawnengine.core;
 
-import com.dawnengine.managers.MapManager;
 import com.dawnengine.network.Server;
 
 public class ServerFrame extends javax.swing.JFrame {

@@ -1,5 +1,6 @@
-package com.dawnengine.game.map;
+package com.dawnengine.serializers;
 
+import com.dawnengine.serializers.objects.MapData;
 import com.dawnengine.utils.Serializer;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -15,7 +16,7 @@ import java.util.logging.Logger;
  *
  * @author alyss
  */
-public class MapLoader {
+public class MapSerializer {
 
     private static final File mapsDir = new File("data files/maps/");
 
@@ -25,7 +26,7 @@ public class MapLoader {
         }
     }
 
-    public static Map load(int index) {
+    public static MapData load(int index) {
         File[] maps = mapsDir.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File file, String string) {
@@ -33,26 +34,26 @@ public class MapLoader {
             }
         });
 
-        Map map = null;
+        MapData map = null;
         if (maps.length == 0) {
             return map;
         }
 
         try (var in = new Input(new FileInputStream(maps[0]))) {
-            map = Serializer.readObject(in, Map.class);
+            map = Serializer.readObject(in, MapData.class);
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(MapLoader.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MapSerializer.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return map;
     }
 
-    public static boolean save(int mapIndex, Map map) {
+    public static boolean save(int mapIndex, MapData map) {
         File f = new File(mapsDir, "map" + mapIndex + ".map");
         try (var out = new Output(new FileOutputStream(f))) {
             Serializer.writeObject(out, map);
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(MapLoader.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MapSerializer.class.getName()).log(Level.SEVERE, null, ex);
             return false;
         }
         return true;

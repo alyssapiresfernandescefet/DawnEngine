@@ -79,11 +79,11 @@ public final class NetworkEvents {
 
     public static void onCheckMapResponse(NetworkContext ctx) {
         var json = ctx.json();
-        GameFrame.getInstance().getGame().onCheckMapReceived(json.getInt("mapIndex"),
+        GameFrame.get().getGame().onCheckMapReceived(json.getInt("mapIndex"),
                 json.getLong("lastRevision"));
     }
 
     public static void onGetMapResponse(NetworkContext ctx) {
-        GameFrame.getInstance().getGame().onGetMapReceived(ctx.json());
+        GameFrame.get().getGame().onGetMapReceived(ctx.json());
     }
 }

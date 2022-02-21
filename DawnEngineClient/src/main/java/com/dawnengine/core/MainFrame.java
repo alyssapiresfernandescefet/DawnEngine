@@ -3,8 +3,10 @@ package com.dawnengine.core;
 import com.dawnengine.network.Client;
 import com.dawnengine.network.ClientPacketType;
 import java.awt.CardLayout;
+import java.awt.Color;
 import java.io.IOException;
 import javax.swing.JOptionPane;
+import javax.swing.UIManager;
 import org.json.JSONObject;
 
 public class MainFrame extends javax.swing.JFrame {
@@ -35,9 +37,9 @@ public class MainFrame extends javax.swing.JFrame {
         }
         dispose();
         
-        GameFrame frame = new GameFrame(json);
-        frame.setVisible(true);
-        frame.getGame().start();
+        var gf = GameFrame.get();
+        gf.setVisible(true);
+        gf.getGame().start(json);
     }
 
     public void onRegisterComplete(boolean accept, String reason) {
@@ -61,18 +63,12 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     public static void main(String[] args) {
-        /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
          */
         try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException ex) {
             java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
@@ -83,13 +79,20 @@ public class MainFrame extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                instance = new MainFrame();
-                instance.setVisible(true);
+        
+        java.awt.EventQueue.invokeLater(() -> {
+            MainFrame.instance = new MainFrame();
+//            instance.setVisible(true);
+            Client client = Client.getClient();
+            try {
+                client.openConnection();
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(null, "Unable to connect to the server.");
+                return;
             }
+            client.sendPacket(ClientPacketType.LOGIN_REQUEST,
+                    new JSONObject().put("username", "asd")
+                            .put("password", "asd"));
         });
     }
 
@@ -151,6 +154,7 @@ public class MainFrame extends javax.swing.JFrame {
         pnlHome.setBackground(new java.awt.Color(0, 0, 0));
 
         lblWelcome.setBackground(new java.awt.Color(255, 255, 255));
+        lblWelcome.setFont(new java.awt.Font("sansserif", 0, 24)); // NOI18N
         lblWelcome.setForeground(new java.awt.Color(255, 255, 255));
         lblWelcome.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblWelcome.setText("Welcome to Dawn Engine!");
