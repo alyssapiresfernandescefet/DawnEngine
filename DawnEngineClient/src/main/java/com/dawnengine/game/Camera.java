@@ -168,15 +168,6 @@ public class Camera {
         g.setTransform(transform);
     }
 
-    public void drawMap(Map map) {
-        if (map == null) {
-            return;
-        }
-        g.drawImage(map.getTilemap(), 0, 0, null);
-        g.setColor(Color.WHITE);
-        drawString(map.getName(), new Vector2(0, 24));
-    }
-
     public Vector2 position() {
         return new Vector2(transform.getTranslateX(), transform.getTranslateY());
     }

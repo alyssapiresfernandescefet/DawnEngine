@@ -10,19 +10,19 @@ import org.json.JSONObject;
  */
 public class EntityPacket {
 
-    private final ClientPacketType type;
+    private final int code;
     private final JSONObject json;
 
-    public EntityPacket(ClientPacketType type, JSONObject json) {
-        this.type = type;
+    public EntityPacket(int code, JSONObject json) {
+        this.code = code;
         this.json = json;
         if (!this.json.has("code")) {
-            this.json.put("code", this.type.code);
+            this.json.put("code", this.code);
         }
     }
 
-    public ClientPacketType type() {
-        return type;
+    public int type() {
+        return code;
     }
 
     public JSONObject json() {
@@ -32,7 +32,7 @@ public class EntityPacket {
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 83 * hash + Objects.hashCode(this.type);
+        hash = 83 * hash + Objects.hashCode(this.code);
         return hash;
     }
 
@@ -48,7 +48,7 @@ public class EntityPacket {
             return false;
         }
         final EntityPacket other = (EntityPacket) obj;
-        if (this.type != other.type) {
+        if (this.code != other.code) {
             return false;
         }
         return true;

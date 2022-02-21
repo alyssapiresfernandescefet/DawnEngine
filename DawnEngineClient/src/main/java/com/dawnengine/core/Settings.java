@@ -27,8 +27,7 @@ public class Settings {
             + "user.password=\n"
             + "user.savepassword=false\n"
             + "server.ip=localhost\n"
-            + "server.tcpport=3001\n"
-            + "server.udpport=3002\n";
+            + "server.tcpport=3001\n";
 
     private static void load() {
         try {

@@ -5,6 +5,7 @@ import com.dawnengine.core.MainFrame;
 import com.dawnengine.game.Game;
 import com.dawnengine.entity.Entity;
 import com.dawnengine.math.Vector2;
+import javax.swing.JOptionPane;
 
 public final class NetworkEvents {
 
@@ -85,5 +86,15 @@ public final class NetworkEvents {
 
     public static void onGetMapResponse(NetworkContext ctx) {
         GameFrame.get().getGame().onGetMapReceived(ctx.json());
+    }
+
+    public static void onUpdateMapResponse(NetworkContext ctx) {
+        var accept = ctx.json().getBoolean("accept");
+        if (!accept) {
+            var message = ctx.json().getString("message");
+            JOptionPane.showMessageDialog(null,
+                    "The operation could not be performed. Reason: " + message,
+                    "Update Map Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }

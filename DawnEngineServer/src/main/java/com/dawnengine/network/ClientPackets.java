@@ -2,7 +2,7 @@ package com.dawnengine.network;
 
 import java.util.function.Consumer;
 
-public enum ClientPacketType {
+public enum ClientPackets {
 
     LOGIN_REQUEST(0xCFFFF001, ctx -> {
         NetworkEvents.onClientLoginRequest(ctx);
@@ -19,19 +19,22 @@ public enum ClientPacketType {
     GET_MAP_REQUEST(0xCFFFF005, ctx -> {
         NetworkEvents.onGetMap(ctx);
     }),
+    UPDATE_MAP_REQUEST(0xCFFFF006, ctx -> {
+        NetworkEvents.onSaveMap(ctx);
+    }),
     ;
     
 
     public final int code;
     public final Consumer<NetworkContext> event;
 
-    ClientPacketType(int code, Consumer<NetworkContext> event) {
+    ClientPackets(int code, Consumer<NetworkContext> event) {
         this.code = code;
         this.event = event;
     }
 
-    public static ClientPacketType get(int code) {
-        for (ClientPacketType value : values()) {
+    public static ClientPackets get(int code) {
+        for (ClientPackets value : values()) {
             if (value.code == code) {
                 return value;
             }

@@ -34,7 +34,7 @@ public class TilesetLoader {
         });
 
         Tileset tileset = new Tileset(num,
-                new BufferedImage(Tile.SIZE_X, Tile.SIZE_Y, BufferedImage.TYPE_INT_ARGB));
+                new BufferedImage(Tile.SIZE_X, Tile.SIZE_Y, BufferedImage.TYPE_INT_RGB));
         if (tilesets.length == 0) {
             return tileset;
         }

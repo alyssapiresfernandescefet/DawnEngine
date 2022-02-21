@@ -124,7 +124,7 @@ public class AdministratorFrame extends javax.swing.JFrame {
         if (openEditor != null) {
             openEditor.dispose();
         }
-
+        
         openEditor = new MapEditor(game);
         openEditor.addWindowListener(new WindowAdapter() {
             @Override
@@ -133,6 +133,7 @@ public class AdministratorFrame extends javax.swing.JFrame {
             }
         });
         openEditor.setVisible(true);
+        this.setVisible(false);
     }//GEN-LAST:event_btnMapEditorActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

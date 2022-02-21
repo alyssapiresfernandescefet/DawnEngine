@@ -22,7 +22,7 @@ public class Server extends Listener {
 
     private Server() throws IOException {
         socket = new com.esotericsoftware.kryonet.Server(65536, 8192);
-        socket.bind(3001, 3002);
+        socket.bind(3001);
         socket.addListener(this);
     }
 
@@ -43,7 +43,7 @@ public class Server extends Listener {
         if (e != null) {
             PlayerManager.save(e);
             var json = new JSONObject();
-            json.put("code", ServerPacketType.ENTITY_DESTROY.code);
+            json.put("code", ServerPackets.ENTITY_DESTROY);
             var array = new JSONArray();
             var obj = new JSONObject();
             obj.put("id", e.id());
@@ -63,7 +63,7 @@ public class Server extends Listener {
                     return;
                 }
                 var ctx = new NetworkContext(connection, obj);
-                ClientPacketType.get(obj.getInt("code")).event.accept(ctx);
+                ClientPackets.get(obj.getInt("code")).event.accept(ctx);
             } else if (Utils.isJSONArray(str)) {
                 var arr = new JSONArray(str);
                 for (int i = 0; i < arr.length(); i++) {
@@ -72,40 +72,36 @@ public class Server extends Listener {
                         continue;
                     }
                     var ctx = new NetworkContext(connection, obj);
-                    ClientPacketType.get(obj.getInt("code")).event.accept(ctx);
+                    ClientPackets.get(obj.getInt("code")).event.accept(ctx);
                 }
             }
         }
     }
 
-    public void sendToAllTCP(String object) {
+    public void sendToAll(String object) {
         socket.sendToAllTCP(object);
     }
 
-    public void sendToAllExceptTCP(int connectionID, String object) {
+    public void sendToAllExcept(Connection connection, String object) {
+        socket.sendToAllExceptTCP(connection.getID(), object);
+    }
+
+    public void sendTo(Connection connection, String object) {
+        socket.sendToTCP(connection.getID(), object);
+    }
+    
+    public void sendToAllExcept(int connectionID, String object) {
         socket.sendToAllExceptTCP(connectionID, object);
     }
 
-    public void sendToTCP(int connectionID, String object) {
+    public void sendTo(int connectionID, String object) {
         socket.sendToTCP(connectionID, object);
     }
 
-    public void sendToAllUDP(String object) {
-        socket.sendToAllUDP(object);
-    }
-
-    public void sendToAllExceptUDP(int connectionID, String object) {
-        socket.sendToAllExceptUDP(connectionID, object);
-    }
-
-    public void sendToUDP(int connectionID, String object) {
-        socket.sendToUDP(connectionID, object);
-    }
-
-    public void sendToMapTCP(int mapIndex, String object) {
+    public void sendToMap(int mapIndex, String object) {
         Server.players.values().forEach(p -> {
             if (p.getMapIndex() == mapIndex) {
-                sendToTCP(p.id(), object);
+                sendTo(p.id(), object);
             }
         });
     }

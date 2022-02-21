@@ -5,6 +5,7 @@ import com.dawnengine.data.PlayerData;
 import com.dawnengine.managers.MapManager;
 import com.dawnengine.managers.PlayerManager;
 import com.dawnengine.utils.Encrypter;
+import java.util.Date;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -31,7 +32,7 @@ public class NetworkEvents {
         }
         var responseJSON = new JSONObject();
 
-        responseJSON.put("code", ServerPacketType.LOGIN_RESPONSE.code);
+        responseJSON.put("code", ServerPackets.LOGIN_RESPONSE);
         responseJSON.put("accept", invalidReason == null);
         if (invalidReason != null) {
             responseJSON.put("reason", invalidReason);
@@ -41,7 +42,7 @@ public class NetworkEvents {
 
         { //Telling all other players that a new player has arrived.
             var json = new JSONObject();
-            json.put("code", ServerPacketType.ENTITY_INSTANCE.code);
+            json.put("code", ServerPackets.ENTITY_INSTANCE);
 
             var array = new JSONArray();
             var obj = new JSONObject();
@@ -54,7 +55,7 @@ public class NetworkEvents {
             array.put(obj);
             json.put("entities", array);
 
-            Server.getServer().sendToMapTCP(player.getMapIndex(), json.toString());
+            Server.getServer().sendToMap(player.getMapIndex(), json.toString());
         }
 
         { //Send to current player all of the data to initialize.
@@ -75,7 +76,7 @@ public class NetworkEvents {
             //Put more data here if necessary.
 
             Server.addPlayer(player);
-            Server.getServer().sendToTCP(player.id(), responseJSON.toString());
+            Server.getServer().sendTo(player.id(), responseJSON.toString());
         }
     }
 
@@ -101,7 +102,7 @@ public class NetworkEvents {
             obj.put("reason", invalidReason);
         }
 
-        obj.put("code", ServerPacketType.REGISTER_RESPONSE.code);
+        obj.put("code", ServerPackets.REGISTER_RESPONSE);
         obj.put("accept", invalidReason == null);
 
         ctx.connection().sendTCP(obj.toString());
@@ -118,17 +119,17 @@ public class NetworkEvents {
         pd.setRotation(json.getFloat("rot"));
 
         json.remove("code");
-        json.put("code", ServerPacketType.TRANSFORM_UPDATE.code);
-        Server.getServer().sendToAllExceptUDP(
-                ctx.connection().getID(), json.toString());
+        json.put("code", ServerPackets.TRANSFORM_UPDATE);
+//        Server.getServer().sendToAllExceptUDP(
+//                ctx.connection().getID(), json.toString());
     }
 
     public static void onCheckMap(NetworkContext ctx) {
         var index = ctx.json().getInt("mapIndex");
         var map = MapManager.load(index);
-        Server.getServer().sendToTCP(ctx.connection().getID(),
+        Server.getServer().sendTo(ctx.connection().getID(),
                 new JSONObject()
-                        .put("code", ServerPacketType.CHECK_MAP_RESPONSE.code)
+                        .put("code", ServerPackets.CHECK_MAP_RESPONSE)
                         .put("lastRevision", map.getLastRevision())
                         .put("mapIndex", index).toString());
     }
@@ -137,7 +138,7 @@ public class NetworkEvents {
         var index = ctx.json().getInt("mapIndex");
         MapData map = MapManager.load(index);
         var json = new JSONObject();
-        json.put("code", ServerPacketType.GET_MAP_RESPONSE.code);
+        json.put("code", ServerPackets.GET_MAP_RESPONSE);
 
         json.put("name", map.getName());
         json.put("sizeX", map.getSizeX());
@@ -146,6 +147,36 @@ public class NetworkEvents {
         json.put("tiles", map.getTiles());
         json.put("mapIndex", index);
 
-        Server.getServer().sendToTCP(ctx.connection().getID(), json.toString());
+        Server.getServer().sendTo(ctx.connection().getID(), json.toString());
+    }
+
+    public static void onSaveMap(NetworkContext ctx) {
+        var json = ctx.json();
+        
+        var index = json.getInt("mapIndex");
+        var map = new MapData(json.getString("name"),
+                json.getInt("sizeX"), json.getInt("sizeY"),
+                json.getLong("lastRevision"), json.getString("tiles"));
+        
+        MapManager.save(index, map);
+
+        var obj = new JSONObject();
+        obj.put("code", ServerPackets.UPDATE_MAP_RESPONSE);
+        obj.put("accept", true);
+
+        Server.getServer().sendTo(ctx.connection(), obj.toString());
+
+        obj = new JSONObject();
+        obj.put("code", ServerPackets.GET_MAP_RESPONSE);
+        obj.put("name", map.getName());
+        obj.put("sizeX", map.getSizeX());
+        obj.put("sizeY", map.getSizeY());
+        obj.put("lastRevision", map.getLastRevision());
+        obj.put("tiles", map.getTiles());
+        obj.put("mapIndex", index);
+        
+        System.out.println(obj.toString());
+        
+        Server.getServer().sendToAllExcept(ctx.connection(), obj.toString());
     }
 }

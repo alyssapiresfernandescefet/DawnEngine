@@ -14,7 +14,15 @@ public class MapData implements Serializable {
     private int sizeX, sizeY;
     private String tiles;
 
-    public MapData() {
+    private MapData() {
+    }
+    
+    public MapData(String name, int sizeX, int sizeY, long lastRevision, String tiles) {
+        this.name = name;
+        this.sizeX = sizeX;
+        this.sizeY = sizeY;
+        this.lastRevision = lastRevision;
+        this.tiles = tiles;
     }
 
     public MapData(String name, int sizeX, int sizeY) {
@@ -25,9 +33,9 @@ public class MapData implements Serializable {
         var length = this.sizeX * this.sizeY;
         this.tiles = "";
         for (int i = 0; i < length - 1; i++) {
-            this.tiles += "0x" + i + "x1x4_";
+            this.tiles += "0x" + i + "x1x1_";
         }
-        this.tiles += "0x" + (length - 1) + "x1x4";
+        this.tiles += "0x" + (length - 1) + "x1x1";
     }
 
     public String getName() {

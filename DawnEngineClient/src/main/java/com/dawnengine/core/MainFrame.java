@@ -1,9 +1,8 @@
 package com.dawnengine.core;
 
 import com.dawnengine.network.Client;
-import com.dawnengine.network.ClientPacketType;
+import com.dawnengine.network.ClientPackets;
 import java.awt.CardLayout;
-import java.awt.Color;
 import java.io.IOException;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
@@ -23,7 +22,6 @@ public class MainFrame extends javax.swing.JFrame {
 
         txtOptionsIP.setText(Settings.getProperty("server.ip"));
         txtOptionsTCP.setText(Settings.getProperty("server.tcpport"));
-        txtOptionsUDP.setText(Settings.getProperty("server.udpport"));
         txtLoginUsername.setText(Settings.getProperty("user.name"));
         pswLoginPassword.setText(Settings.getProperty("user.password"));
         rbSavePassword.setSelected(Boolean.parseBoolean(
@@ -36,7 +34,7 @@ public class MainFrame extends javax.swing.JFrame {
             return;
         }
         dispose();
-        
+
         var gf = GameFrame.get();
         gf.setVisible(true);
         gf.getGame().start(json);
@@ -53,7 +51,7 @@ public class MainFrame extends javax.swing.JFrame {
         String username = txtLoginUsername.getText();
         String password = new String(pswLoginPassword.getPassword());
 
-        Client.getClient().sendPacket(ClientPacketType.LOGIN_REQUEST,
+        Client.getClient().sendPacket(ClientPackets.LOGIN_REQUEST,
                 new JSONObject().put("username", username)
                         .put("password", password));
     }
@@ -79,7 +77,7 @@ public class MainFrame extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-        
+
         java.awt.EventQueue.invokeLater(() -> {
             MainFrame.instance = new MainFrame();
 //            instance.setVisible(true);
@@ -90,7 +88,7 @@ public class MainFrame extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(null, "Unable to connect to the server.");
                 return;
             }
-            client.sendPacket(ClientPacketType.LOGIN_REQUEST,
+            client.sendPacket(ClientPackets.LOGIN_REQUEST,
                     new JSONObject().put("username", "asd")
                             .put("password", "asd"));
         });
@@ -121,10 +119,8 @@ public class MainFrame extends javax.swing.JFrame {
         pnlOptions = new javax.swing.JPanel();
         lblOptionsIP = new javax.swing.JLabel();
         lblOptionsTCP = new javax.swing.JLabel();
-        lblOptionsUDP = new javax.swing.JLabel();
         txtOptionsIP = new javax.swing.JTextField();
         txtOptionsTCP = new javax.swing.JTextField();
-        txtOptionsUDP = new javax.swing.JTextField();
         lblSave = new javax.swing.JLabel();
         pnlLogin = new javax.swing.JPanel();
         lblLoginUsername = new javax.swing.JLabel();
@@ -256,10 +252,6 @@ public class MainFrame extends javax.swing.JFrame {
         lblOptionsTCP.setForeground(new java.awt.Color(255, 255, 255));
         lblOptionsTCP.setText("TCP Port:");
 
-        lblOptionsUDP.setBackground(new java.awt.Color(255, 255, 255));
-        lblOptionsUDP.setForeground(new java.awt.Color(255, 255, 255));
-        lblOptionsUDP.setText("UDP Port:");
-
         lblSave.setBackground(new java.awt.Color(255, 255, 255));
         lblSave.setForeground(new java.awt.Color(255, 255, 255));
         lblSave.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -275,26 +267,21 @@ public class MainFrame extends javax.swing.JFrame {
         pnlOptionsLayout.setHorizontalGroup(
             pnlOptionsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlOptionsLayout.createSequentialGroup()
-                .addGroup(pnlOptionsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGap(103, 103, 103)
+                .addGroup(pnlOptionsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(pnlOptionsLayout.createSequentialGroup()
-                        .addGap(103, 103, 103)
-                        .addGroup(pnlOptionsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(pnlOptionsLayout.createSequentialGroup()
-                                .addComponent(lblOptionsIP)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtOptionsIP, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(pnlOptionsLayout.createSequentialGroup()
-                                .addComponent(lblOptionsTCP)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtOptionsTCP))
-                            .addGroup(pnlOptionsLayout.createSequentialGroup()
-                                .addComponent(lblOptionsUDP)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtOptionsUDP))))
+                        .addComponent(lblOptionsIP)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtOptionsIP, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(pnlOptionsLayout.createSequentialGroup()
-                        .addGap(200, 200, 200)
-                        .addComponent(lblSave, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(lblOptionsTCP)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtOptionsTCP)))
                 .addContainerGap(103, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlOptionsLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(lblSave, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(191, 191, 191))
         );
         pnlOptionsLayout.setVerticalGroup(
             pnlOptionsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -307,13 +294,9 @@ public class MainFrame extends javax.swing.JFrame {
                 .addGroup(pnlOptionsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblOptionsTCP)
                     .addComponent(txtOptionsTCP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(pnlOptionsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblOptionsUDP)
-                    .addComponent(txtOptionsUDP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 29, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblSave)
-                .addGap(38, 38, 38))
+                .addContainerGap(107, Short.MAX_VALUE))
         );
 
         pnlCards.add(pnlOptions, "options");
@@ -500,7 +483,7 @@ public class MainFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Unable to connect to the server.");
             return;
         }
-        client.sendPacket(ClientPacketType.LOGIN_REQUEST,
+        client.sendPacket(ClientPackets.LOGIN_REQUEST,
                 new JSONObject().put("username", username)
                         .put("password", password));
     }//GEN-LAST:event_lblLoginEnterMouseClicked
@@ -530,7 +513,7 @@ public class MainFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Unable to connect to the server.");
             return;
         }
-        client.sendPacket(ClientPacketType.REGISTER_REQUEST,
+        client.sendPacket(ClientPackets.REGISTER_REQUEST,
                 new JSONObject().put("username", username)
                         .put("password", password));
     }//GEN-LAST:event_lblRegisterMouseClicked
@@ -538,11 +521,9 @@ public class MainFrame extends javax.swing.JFrame {
     private void lblSaveMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblSaveMouseClicked
         String ip = txtOptionsIP.getText();
         String tcp = txtOptionsTCP.getText();
-        String udp = txtOptionsUDP.getText();
 
         Settings.setProperty("server.ip", ip);
         Settings.setProperty("server.tcpport", tcp);
-        Settings.setProperty("server.udpport", udp);
 
         JOptionPane.showMessageDialog(this, "Saved successfully.");
     }//GEN-LAST:event_lblSaveMouseClicked
@@ -563,7 +544,6 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel lblLoginUsername;
     private javax.swing.JLabel lblOptionsIP;
     private javax.swing.JLabel lblOptionsTCP;
-    private javax.swing.JLabel lblOptionsUDP;
     private javax.swing.JLabel lblRegister;
     private javax.swing.JLabel lblRegisterConfirmPassword;
     private javax.swing.JLabel lblRegisterPassword;
@@ -582,7 +562,6 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JTextField txtLoginUsername;
     private javax.swing.JTextField txtOptionsIP;
     private javax.swing.JTextField txtOptionsTCP;
-    private javax.swing.JTextField txtOptionsUDP;
     private javax.swing.JTextField txtRegisterUsername;
     // End of variables declaration//GEN-END:variables
 }
