@@ -1,16 +1,24 @@
 package com.dawnengine.network;
 
 import com.dawnengine.core.Settings;
+import com.dawnengine.network.NetworkPackets.ServerEvents;
 import com.dawnengine.utils.Utils;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class Client extends Listener {
 
+    private final HashMap<ScheduledResponseHandler, Consumer<NetworkContext>> awaitingResponses = new HashMap<>();
     private static Client client;
 
     static {
@@ -52,8 +60,7 @@ public class Client extends Listener {
                 if (!obj.has("code")) {
                     return;
                 }
-                var ctx = new NetworkContext(connection, obj);
-                ServerPackets.get(obj.getInt("code")).event.accept(ctx);
+                acceptPacket(connection, obj);
             } else if (Utils.isJSONArray(str)) {
                 var arr = new JSONArray(str);
                 for (int i = 0; i < arr.length(); i++) {
@@ -61,10 +68,24 @@ public class Client extends Listener {
                     if (!obj.has("code")) {
                         continue;
                     }
-                    var ctx = new NetworkContext(connection, obj);
-                    ServerPackets.get(obj.getInt("code")).event.accept(ctx);
+                    acceptPacket(connection, obj);
                 }
             }
+        }
+    }
+
+    private void acceptPacket(Connection connection, JSONObject serverData) {
+        var ctx = new NetworkContext(connection, serverData);
+        var code = serverData.getInt("code");
+        var requestTime = serverData.optLong("reqTime");
+        if (requestTime == 0) {
+            //It is an event.
+            var packet = ServerEvents.get(code);
+            packet.event.accept(ctx);
+        } else {
+            //It is responding to a request.
+            awaitingResponses.remove(new ScheduledResponseHandler(
+                    requestTime, code)).accept(ctx);
         }
     }
 
@@ -76,11 +97,71 @@ public class Client extends Listener {
         if (obj == null) {
             return;
         }
-        
+
         if (!obj.has("code")) {
             obj.put("code", code);
         }
         send(obj.toString());
-        System.out.println("Sent: " + obj.toString());
+        System.out.println("Sent: " + code + obj.toString());
+    }
+
+    public void sendPacket(int code, JSONObject obj,
+            int intendedResponse, Consumer<NetworkContext> onResponse) {
+        long time = new Date().getTime();
+
+        var scheduled = new ScheduledResponseHandler(time, intendedResponse);
+        awaitingResponses.put(scheduled, onResponse);
+        obj.put("reqTime", time);
+
+        var collectorThread = new Thread(() -> {
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            awaitingResponses.remove(scheduled, onResponse);
+        }, "Schedule GC for " + time);
+        sendPacket(code, obj);
+        collectorThread.start();
+    }
+
+    private class ScheduledResponseHandler {
+
+        public final long requestTime;
+        public final int intendedResponse;
+
+        public ScheduledResponseHandler(long requestTime, int intendedResponse) {
+            this.requestTime = requestTime;
+            this.intendedResponse = intendedResponse;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 41 * hash + (int) (this.requestTime ^ (this.requestTime >>> 32));
+            hash = 41 * hash + Objects.hashCode(this.intendedResponse);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final ScheduledResponseHandler other = (ScheduledResponseHandler) obj;
+            if (this.requestTime != other.requestTime) {
+                return false;
+            }
+            if (this.intendedResponse != other.intendedResponse) {
+                return false;
+            }
+            return true;
+        }
     }
 }

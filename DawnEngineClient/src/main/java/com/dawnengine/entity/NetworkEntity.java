@@ -2,7 +2,7 @@ package com.dawnengine.entity;
 
 import com.dawnengine.math.Vector2;
 import com.dawnengine.network.Client;
-import com.dawnengine.network.ClientPackets;
+import com.dawnengine.network.NetworkPackets;
 import com.dawnengine.network.EntityPacket;
 import java.util.ArrayList;
 import org.json.JSONArray;
@@ -24,7 +24,7 @@ public class NetworkEntity extends Entity {
         packets.remove(packet);
         packets.add(packet);
     }
-
+    
     @Override
     public void networkUpdate() {
         if (packets.size() > 0) {
@@ -32,14 +32,13 @@ public class NetworkEntity extends Entity {
             for (EntityPacket p : packets) {
                 tcpArr.put(p.json());
             }
-            var tcpObj = tcpArr.length() == 1 ? tcpArr.getJSONObject(0) : tcpArr;
-            Client.getClient().send(tcpObj.toString());
+            Client.getClient().send(tcpArr.toString());
             packets.clear();
         }
     }
 
     protected void invalidateTransform() {
-        invalidate(new EntityPacket(ClientPackets.TRANSFORM_UPDATE,
+        invalidate(new EntityPacket(NetworkPackets.CLIENT_TRANSFORM_UPDATE,
                 new JSONObject().put("id", id())
                         .put("posX", transform().position().x)
                         .put("posY", transform().position().y)

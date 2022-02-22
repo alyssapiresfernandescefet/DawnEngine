@@ -1,7 +1,8 @@
 package com.dawnengine.core;
 
+import com.dawnengine.game.Game;
 import com.dawnengine.network.Client;
-import com.dawnengine.network.ClientPackets;
+import com.dawnengine.network.NetworkPackets;
 import java.awt.CardLayout;
 import java.io.IOException;
 import javax.swing.JOptionPane;
@@ -10,7 +11,6 @@ import org.json.JSONObject;
 
 public class MainFrame extends javax.swing.JFrame {
 
-    private static MainFrame instance;
     private final CardLayout cards;
     private String currentCard = "home";
 
@@ -28,19 +28,19 @@ public class MainFrame extends javax.swing.JFrame {
                 Settings.getProperty("user.savepassword")));
     }
 
-    public void onLoginComplete(JSONObject json) {
+    private void onLoginComplete(JSONObject json) {
         if (!json.getBoolean("accept")) {
             JOptionPane.showMessageDialog(this, json.getString("reason"));
             return;
         }
         dispose();
-
-        var gf = GameFrame.get();
-        gf.setVisible(true);
-        gf.getGame().start(json);
+        
+        var frame = new GameFrame();
+        frame.setVisible(true);
+        Game.get().start(json);
     }
 
-    public void onRegisterComplete(boolean accept, String reason) {
+    private void onRegisterComplete(boolean accept, String reason) {
         if (!accept) {
             pswRegisterPassword.setText("");
             pswRegisterConfirmPassword.setText("");
@@ -51,13 +51,12 @@ public class MainFrame extends javax.swing.JFrame {
         String username = txtLoginUsername.getText();
         String password = new String(pswLoginPassword.getPassword());
 
-        Client.getClient().sendPacket(ClientPackets.LOGIN_REQUEST,
-                new JSONObject().put("username", username)
-                        .put("password", password));
-    }
-
-    public static MainFrame getInstance() {
-        return instance;
+        var req = new JSONObject().put("username", username)
+                .put("password", password);
+        Client.getClient().sendPacket(NetworkPackets.CLIENT_LOGIN_REQUEST, req,
+                NetworkPackets.SERVER_LOGIN_RESPONSE, ctx -> {
+                    onLoginComplete(ctx.response());
+                });
     }
 
     public static void main(String[] args) {
@@ -79,18 +78,18 @@ public class MainFrame extends javax.swing.JFrame {
         //</editor-fold>
 
         java.awt.EventQueue.invokeLater(() -> {
-            MainFrame.instance = new MainFrame();
-//            instance.setVisible(true);
-            Client client = Client.getClient();
-            try {
-                client.openConnection();
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(null, "Unable to connect to the server.");
-                return;
-            }
-            client.sendPacket(ClientPackets.LOGIN_REQUEST,
-                    new JSONObject().put("username", "asd")
-                            .put("password", "asd"));
+            MainFrame frame = new MainFrame();
+            frame.setVisible(true);
+//            Client client = Client.getClient();
+//            try {
+//                client.openConnection();
+//            } catch (IOException ex) {
+//                JOptionPane.showMessageDialog(null, "Unable to connect to the server.");
+//                return;
+//            }
+//            client.sendPacket(NetworkPackets.CLIENT_LOGIN_REQUEST,
+//                    new JSONObject().put("username", "asd")
+//                            .put("password", "asd"));
         });
     }
 
@@ -483,9 +482,12 @@ public class MainFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Unable to connect to the server.");
             return;
         }
-        client.sendPacket(ClientPackets.LOGIN_REQUEST,
-                new JSONObject().put("username", username)
-                        .put("password", password));
+        var req = new JSONObject().put("username", username)
+                .put("password", password);
+        client.sendPacket(NetworkPackets.CLIENT_LOGIN_REQUEST, req,
+                NetworkPackets.SERVER_LOGIN_RESPONSE, ctx -> {
+                    onLoginComplete(ctx.response());
+                });
     }//GEN-LAST:event_lblLoginEnterMouseClicked
 
     private void lblRegisterMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegisterMouseClicked
@@ -513,9 +515,13 @@ public class MainFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Unable to connect to the server.");
             return;
         }
-        client.sendPacket(ClientPackets.REGISTER_REQUEST,
-                new JSONObject().put("username", username)
-                        .put("password", password));
+
+        var req = new JSONObject().put("username", username)
+                .put("password", password);
+        client.sendPacket(NetworkPackets.CLIENT_REGISTER_REQUEST, req, NetworkPackets.SERVER_REGISTER_RESPONSE, ctx -> {
+            var json = ctx.response();
+            onRegisterComplete(json.getBoolean("accept"), json.optString("reason"));
+        });
     }//GEN-LAST:event_lblRegisterMouseClicked
 
     private void lblSaveMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblSaveMouseClicked

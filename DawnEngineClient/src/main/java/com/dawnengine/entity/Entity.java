@@ -52,8 +52,9 @@ public class Entity implements Sprite {
 
     public void update(double dt) {
     }
-
+    
     public void networkUpdate() {
+        
     }
 
     public void onDestroy() {

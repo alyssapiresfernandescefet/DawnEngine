@@ -1,5 +1,6 @@
 package com.dawnengine.serializers.objects;
 
+import com.dawnengine.game.map.Map;
 import java.io.Serializable;
 
 /**
@@ -8,20 +9,51 @@ import java.io.Serializable;
  */
 public class MapData implements Serializable {
 
-    private String name;
-    private long lastRevision;
-    private int tileCountX, tileCountY;
-    private String tiles;
+    private final String name;
+    private final long lastRevision;
+    private final int moral;
+    private final int linkUp, linkDown, linkRight, linkLeft;
+    private final int tileCountX, tileCountY;
+    private final String tiles;
 
     private MapData() {
+        this.name = null;
+        this.lastRevision = 0;
+        this.tileCountX = 0;
+        this.tileCountY = 0;
+        this.moral = 0;
+        this.linkUp = 0;
+        this.linkDown = 0;
+        this.linkRight = 0;
+        this.linkLeft = 0;
+        this.tiles = null;
+    }
+    
+    public MapData(Map map) {
+        this.name = map.getName();
+        this.lastRevision = map.getLastRevision();
+        this.tileCountX = map.getTileCountX();
+        this.tileCountY = map.getTileCountY();
+        this.moral = map.getMoral().ordinal();
+        this.linkUp = map.getLinkUp();
+        this.linkDown = map.getLinkDown();
+        this.linkRight = map.getLinkRight();
+        this.linkLeft = map.getLinkLeft();
+        this.tiles = map.getSerializedTiles();
     }
 
-    public MapData(String name, int tileCountX, int tileCountY,
+    public MapData(String name, int tileCountX, int tileCountY, int moral,
+            int linkUp, int linkDown, int linkRight, int linkLeft,
             long lastRevision, String tiles) {
         this.name = name;
         this.lastRevision = lastRevision;
         this.tileCountX = tileCountX;
         this.tileCountY = tileCountY;
+        this.moral = moral;
+        this.linkUp = linkUp;
+        this.linkDown = linkDown;
+        this.linkRight = linkRight;
+        this.linkLeft = linkLeft;
         this.tiles = tiles;
     }
 
@@ -29,36 +61,40 @@ public class MapData implements Serializable {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public long getLastRevision() {
         return lastRevision;
-    }
-
-    public void setLastRevision(long lastRevision) {
-        this.lastRevision = lastRevision;
     }
 
     public int getTileCountX() {
         return tileCountX;
     }
 
-    public void setTileCountX(int tileCountX) {
-        this.tileCountX = tileCountX;
-    }
-
     public int getTileCountY() {
         return tileCountY;
     }
 
-    public void setTileCountY(int tileCountY) {
-        this.tileCountY = tileCountY;
+    public int getMoral() {
+        return moral;
+    }
+
+    public int getLinkUp() {
+        return linkUp;
+    }
+
+    public int getLinkDown() {
+        return linkDown;
+    }
+
+    public int getLinkRight() {
+        return linkRight;
+    }
+
+    public int getLinkLeft() {
+        return linkLeft;
     }
 
     public String getTiles() {
         return tiles;
     }
-    
+
 }

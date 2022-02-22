@@ -10,13 +10,17 @@ import java.util.HashMap;
  * @author alyss
  */
 public class Map {
+
     public static final int IGNORED_COLOR = 0xFFFF00FF;
-    
+
     private final int index;
     private String name;
     private long lastRevision;
     private int tileCountX, tileCountY;
+    private MapMoral moral;
+    private int linkUp, linkDown, linkRight, linkLeft;
     private final Tile[][] tiles;
+
     private BufferedImage tilemap;
 
     public Map(int index, MapData map) {
@@ -25,6 +29,11 @@ public class Map {
         this.lastRevision = map.getLastRevision();
         this.tileCountX = map.getTileCountX();
         this.tileCountY = map.getTileCountY();
+        this.moral = MapMoral.values()[map.getMoral()];
+        this.linkUp = map.getLinkUp();
+        this.linkDown = map.getLinkDown();
+        this.linkRight = map.getLinkRight();
+        this.linkLeft = map.getLinkLeft();
         this.tiles = new Tile[Tile.LAYERS_NUM][this.tileCountX * this.tileCountY];
 
         String[] serializedTiles = map.getTiles().split("_");
@@ -48,16 +57,6 @@ public class Map {
             this.tiles[layerIndex][mapIndex] = new Tile(tileset, tileIndex);
         }
 
-        for (int i = 0; i < Tile.LAYERS_NUM; i++) {
-            var layer = this.tiles[i];
-            for (int j = 0; j < layer.length; j++) {
-                var tile = layer[j];
-                if (tile == null) {
-                    layer[j] = new Tile();
-                }
-            }
-        }
-
         bakeTilemap();
     }
 
@@ -67,13 +66,92 @@ public class Map {
         this.lastRevision = other.lastRevision;
         this.tileCountX = other.tileCountX;
         this.tileCountY = other.tileCountY;
+        this.moral = other.moral;
+        this.linkUp = other.linkUp;
+        this.linkDown = other.linkDown;
+        this.linkRight = other.linkRight;
+        this.linkLeft = other.linkLeft;
         this.tiles = new Tile[other.tiles.length][this.tileCountX * this.tileCountY];
         for (int x = 0; x < this.tiles.length; x++) {
             for (int y = 0; y < this.tiles[x].length; y++) {
-                this.tiles[x][y] = new Tile(other.tiles[x][y]);
+                var tile = other.tiles[x][y];
+                if (tile != null) {
+                    this.tiles[x][y] = new Tile(tile);
+                }
             }
         }
         bakeTilemap();
+    }
+
+    private void bakeTilemap() {
+        tilemap = new BufferedImage(getTileCountX() * Tile.SIZE_X,
+                getTileCountY() * Tile.SIZE_X, BufferedImage.TYPE_INT_RGB);
+        for (int i = 0; i < tiles.length; i++) {
+            var layer = tiles[i];
+            for (int j = 0; j < layer.length; j++) {
+                var tile = layer[j];
+                if (tile == null) {
+                    continue;
+                }
+                for (int y = 0; y < tile.getHeight(); y++) {
+                    for (int x = 0; x < tile.getWidth(); x++) {
+                        var rgb = tile.getRGB(x, y);
+                        if (rgb != 0 && rgb != IGNORED_COLOR) {
+                            tilemap.setRGB(x + j % getTileCountX() * Tile.SIZE_X,
+                                    y + j / getTileCountX() * Tile.SIZE_Y, rgb);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Bakes a section of the tilemap.
+     *
+     * @param index the index of the tile to be baked into the tilemap.
+     */
+    private void bakeTilemap(int index) {
+        var posX = index % getTileCountX() * Tile.SIZE_X;
+        var posY = index / getTileCountX() * Tile.SIZE_Y;
+
+        tilemap.setRGB(posX, posY, Tile.SIZE_X, Tile.SIZE_Y,
+                new int[Tile.SIZE_X * Tile.SIZE_Y], 0, Tile.SIZE_X);
+
+        for (int i = 0; i < Tile.LAYERS_NUM; i++) {
+            var tile = tiles[i][index];
+
+            if (tile == null) {
+                continue;
+            }
+
+            for (int y = 0; y < tile.getHeight(); y++) {
+                for (int x = 0; x < tile.getWidth(); x++) {
+                    var rgb = tile.getRGB(x, y);
+                    if (rgb != 0 && rgb != IGNORED_COLOR) {
+                        tilemap.setRGB(x + posX, y + posY, rgb);
+                    }
+                }
+            }
+        }
+    }
+
+    public String getSerializedTiles() {
+        String str = "";
+        for (int layerNum = 0; layerNum < tiles.length; layerNum++) {
+            var layer = tiles[layerNum];
+            for (int mapPos = 0; mapPos < layer.length; mapPos++) {
+                var tile = layer[mapPos];
+                if (tile == null) {
+                    continue;
+                }
+                str += layerNum + "x"
+                        + mapPos + "x"
+                        + tile.getTilesetNum() + "x"
+                        + tile.getTileIndex() + "_";
+            }
+        }
+        return str.substring(0, str.length() - 1);
     }
 
     public String getName() {
@@ -113,59 +191,6 @@ public class Map {
         return tileCountY;
     }
 
-    private void bakeTilemap() {
-        tilemap = new BufferedImage(getTileCountX() * Tile.SIZE_X,
-                getTileCountY() * Tile.SIZE_X, BufferedImage.TYPE_INT_RGB);
-        for (int i = 0; i < tiles.length; i++) {
-            var layer = tiles[i];
-            for (int j = 0; j < layer.length; j++) {
-                var tile = layer[j];
-                if (tile.getSprite() == null) {
-                    continue;
-                }
-                for (int y = 0; y < tile.getHeight(); y++) {
-                    for (int x = 0; x < tile.getWidth(); x++) {
-                        var rgb = tile.getRGB(x, y);
-                        if (rgb != 0 && rgb != IGNORED_COLOR) {
-                            tilemap.setRGB(x + j % getTileCountX() * Tile.SIZE_X,
-                                    y + j / getTileCountX() * Tile.SIZE_Y, rgb);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Bakes a section of the tilemap.
-     *
-     * @param index the index of the tile to be baked into the tilemap.
-     */
-    private void bakeTilemap(int index) {
-        var posX = index % getTileCountX() * Tile.SIZE_X;
-        var posY = index / getTileCountX() * Tile.SIZE_Y;
-
-        tilemap.setRGB(posX, posY, Tile.SIZE_X, Tile.SIZE_Y,
-                new int[Tile.SIZE_X * Tile.SIZE_Y], 0, Tile.SIZE_X);
-
-        for (int i = 0; i < Tile.LAYERS_NUM; i++) {
-            var tile = tiles[i][index];
-
-            if (tile.getSprite() == null) {
-                continue;
-            }
-
-            for (int y = 0; y < tile.getHeight(); y++) {
-                for (int x = 0; x < tile.getWidth(); x++) {
-                    var rgb = tile.getRGB(x, y);
-                    if (rgb != 0 && rgb != IGNORED_COLOR) {
-                        tilemap.setRGB(x + posX, y + posY, rgb);
-                    }
-                }
-            }
-        }
-    }
-
     public BufferedImage getTilemap() {
         return tilemap;
     }
@@ -174,21 +199,43 @@ public class Map {
         return index;
     }
 
-    public String getSerializedTiles() {
-        String str = "";
-        for (int i = 0; i < tiles.length; i++) {
-            var layer = tiles[i];
-            for (int j = 0; j < layer.length; j++) {
-                var tile = layer[j];
-                if (tile.getSprite() == null) {
-                    continue;
-                }
-                str += i + "x"
-                        + j + "x"
-                        + tile.getTilesetNum() + "x"
-                        + tile.getTileIndex() + "_";
-            }
-        }
-        return str.substring(0, str.length() - 1);
+    public MapMoral getMoral() {
+        return moral;
+    }
+
+    public void setMoral(MapMoral moral) {
+        this.moral = moral;
+    }
+
+    public int getLinkUp() {
+        return linkUp;
+    }
+
+    public void setLinkUp(int linkUp) {
+        this.linkUp = linkUp;
+    }
+
+    public int getLinkDown() {
+        return linkDown;
+    }
+
+    public void setLinkDown(int linkDown) {
+        this.linkDown = linkDown;
+    }
+
+    public int getLinkRight() {
+        return linkRight;
+    }
+
+    public void setLinkRight(int linkRight) {
+        this.linkRight = linkRight;
+    }
+
+    public int getLinkLeft() {
+        return linkLeft;
+    }
+
+    public void setLinkLeft(int linkLeft) {
+        this.linkLeft = linkLeft;
     }
 }

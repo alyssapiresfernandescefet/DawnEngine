@@ -43,7 +43,7 @@ public class Server extends Listener {
         if (e != null) {
             PlayerManager.save(e);
             var json = new JSONObject();
-            json.put("code", ServerPackets.ENTITY_DESTROY);
+            json.put("code", ServerPackets.SERVER_ENTITY_DESTROY_EVENT);
             var array = new JSONArray();
             var obj = new JSONObject();
             obj.put("id", e.id());
@@ -78,29 +78,45 @@ public class Server extends Listener {
         }
     }
 
-    public void sendToAll(String object) {
-        socket.sendToAllTCP(object);
+    public void sendToAll(JSONObject object) {
+        socket.sendToAllTCP(object.toString());
     }
 
-    public void sendToAllExcept(Connection connection, String object) {
-        socket.sendToAllExceptTCP(connection.getID(), object);
+    public void sendToAllExcept(Connection connection, JSONObject object) {
+        socket.sendToAllExceptTCP(connection.getID(), object.toString());
     }
 
-    public void sendTo(Connection connection, String object) {
-        socket.sendToTCP(connection.getID(), object);
-    }
-    
-    public void sendToAllExcept(int connectionID, String object) {
-        socket.sendToAllExceptTCP(connectionID, object);
+    public void sendTo(Connection connection, JSONObject object) {
+        socket.sendToTCP(connection.getID(), object.toString());
     }
 
-    public void sendTo(int connectionID, String object) {
-        socket.sendToTCP(connectionID, object);
+    public void sendToAllExcept(int connectionID, JSONObject object) {
+        socket.sendToAllExceptTCP(connectionID, object.toString());
     }
 
-    public void sendToMap(int mapIndex, String object) {
+    public void sendTo(int connectionID, JSONObject object) {
+        socket.sendToTCP(connectionID, object.toString());
+    }
+
+    public void sendToMap(int mapIndex, JSONObject object) {
         Server.players.values().forEach(p -> {
             if (p.getMapIndex() == mapIndex) {
+                sendTo(p.id(), object);
+            }
+        });
+    }
+
+    public void sendToMapExcept(Connection connection, int mapIndex, JSONObject object) {
+        Server.players.values().forEach(p -> {
+            if (p.getMapIndex() == mapIndex && p.id() != connection.getID()) {
+                sendTo(p.id(), object);
+            }
+        });
+    }
+
+    public void sendToMapExcept(int connectionID, int mapIndex, JSONObject object) {
+        Server.players.values().forEach(p -> {
+            if (p.getMapIndex() == mapIndex && p.id() != connectionID) {
                 sendTo(p.id(), object);
             }
         });
@@ -114,23 +130,23 @@ public class Server extends Listener {
         getServer().socket.stop();
         getServer().socket.close();
     }
-    
+
     public static Collection<PlayerData> getAllPlayers() {
         return players.values();
     }
-    
+
     public static PlayerData getPlayer(int id) {
         return players.get(id);
     }
-    
+
     public static boolean addPlayer(PlayerData p) {
         return players.put(p.id(), p) != null;
     }
-    
+
     public static boolean removePlayer(PlayerData p) {
         return players.remove(p.id(), p);
     }
-    
+
     public static boolean removePlayer(int id) {
         return players.remove(id) != null;
     }

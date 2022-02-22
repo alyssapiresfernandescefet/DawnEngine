@@ -13,12 +13,9 @@ import javax.swing.JFrame;
 public class GameFrame extends JFrame {
     public static final int GAME_WIDTH = 960, GAME_HEIGHT = 640;
 
-    private static GameFrame instance;
-
     private final Game game;
 
-    private GameFrame() {
-        instance = this;
+    public GameFrame() {
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         setResizable(false);
         setSize(GAME_WIDTH, GAME_HEIGHT);
@@ -30,7 +27,7 @@ public class GameFrame extends JFrame {
             }
         });
         
-        game = new Game();
+        game = Game.get();
         game.setBounds(0, 0, GAME_WIDTH - 10, GAME_HEIGHT - 10);
         getContentPane().add(game);
     }
@@ -44,16 +41,5 @@ public class GameFrame extends JFrame {
         dispose();
         Client.getClient().closeConnection();
         game.stop();
-    }
-
-    public static GameFrame get() {
-        if (instance == null) {
-            instance = new GameFrame();
-        }
-        return instance;
-    }
-
-    public Game getGame() {
-        return game;
     }
 }

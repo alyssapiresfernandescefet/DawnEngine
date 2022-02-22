@@ -1,5 +1,6 @@
 package com.dawnengine.editor;
 
+import com.dawnengine.editor.map.MapEditor;
 import com.dawnengine.game.Camera;
 import com.dawnengine.game.Game;
 import java.awt.event.MouseEvent;

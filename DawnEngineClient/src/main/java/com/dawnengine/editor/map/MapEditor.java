@@ -1,5 +1,6 @@
-package com.dawnengine.editor;
+package com.dawnengine.editor.map;
 
+import com.dawnengine.editor.Editor;
 import com.dawnengine.game.Camera;
 import com.dawnengine.game.Game;
 import com.dawnengine.game.Input;
@@ -7,7 +8,7 @@ import com.dawnengine.game.map.Map;
 import com.dawnengine.game.map.Tile;
 import com.dawnengine.math.Vector2;
 import com.dawnengine.network.Client;
-import com.dawnengine.network.ClientPackets;
+import com.dawnengine.network.NetworkPackets;
 import com.dawnengine.serializers.MapSerializer;
 import com.dawnengine.serializers.TilesetLoader;
 import com.dawnengine.serializers.objects.MapData;
@@ -21,8 +22,12 @@ import org.json.JSONObject;
 
 public class MapEditor extends Editor {
 
+    private final MapPropertiesEditor propertiesEditor;
     private final Game game;
     private final Map map, originalMap;
+
+    private boolean hasTileEdited = false, hasPropertiesEdited = false;
+
     private int currentLayer = Tile.GROUND;
     private CardLayout optionsLayout;
 
@@ -32,6 +37,7 @@ public class MapEditor extends Editor {
         this.game = game;
         this.map = game.getMap();
         this.originalMap = new Map(map);
+        this.propertiesEditor = new MapPropertiesEditor(this.map);
 
         var files = TilesetLoader.listAll();
         for (int i = 0; i < files.length; i++) {
@@ -50,25 +56,44 @@ public class MapEditor extends Editor {
     }
 
     public void save() {
-        var obj = new JSONObject();
-        var index = map.getIndex();
-        var name = map.getName();
-        var sizeX = map.getTileCountX();
-        var sizeY = map.getTileCountY();
-        var lastRevision = new Date().getTime();
-        var tiles = map.getSerializedTiles();
-        
-        var mapData = new MapData(name, sizeX, sizeY, lastRevision, tiles);
-        
-        obj.put("mapIndex", index);
-        obj.put("name", name);
-        obj.put("sizeX", sizeX);
-        obj.put("sizeY", sizeY);
-        obj.put("lastRevision", lastRevision);
-        obj.put("tiles", tiles);
-        Client.getClient().sendPacket(ClientPackets.UPDATE_MAP_REQUEST, obj);
-        MapSerializer.save(index, mapData);
         dispose();
+
+        var req = new JSONObject();
+        var index = map.getIndex();
+        var mapData = new MapData(map);
+
+        if (hasPropertiesEdited) {
+        } else if (hasTileEdited) {
+        } else {
+            return;
+        }
+
+        req.put("name", mapData.getName());
+        req.put("moral", mapData.getMoral());
+        req.put("lUp", mapData.getLinkUp());
+        req.put("lDown", mapData.getLinkDown());
+        req.put("lRight", mapData.getLinkRight());
+        req.put("lLeft", mapData.getLinkLeft());
+        req.put("sizeX", mapData.getTileCountX());
+        req.put("sizeY", mapData.getTileCountY());
+        req.put("tiles", mapData.getTiles());
+
+        req.put("mapIndex", index);
+        req.put("lastRevision", new Date().getTime());
+
+        Client.getClient().sendPacket(NetworkPackets.CLIENT_UPDATE_MAP_REQUEST, req,
+                NetworkPackets.SERVER_UPDATE_MAP_RESPONSE, ctx -> {
+                    var res = ctx.response();
+                    var accept = res.getBoolean("accept");
+                    if (!accept) {
+                        var message = res.getString("message");
+                        JOptionPane.showMessageDialog(null,
+                                "The operation could not be performed. Reason: " + message,
+                                "Update Map Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    MapSerializer.save(index, mapData);
+                });
     }
 
     public void cancel() {
@@ -95,12 +120,14 @@ public class MapEditor extends Editor {
                             (x + i) + (y + j) * map.getTileCountX(), tiles[i][j]);
                 }
             }
+            hasTileEdited = true;
         } else if ((Input.isMouseDragging() && Input.getMouseButton(MouseEvent.BUTTON3))
                 || Input.getMouseButtonDown(MouseEvent.BUTTON3)) {
             var pos = Input.getMousePosition();
             int x = (int) pos.x / Tile.SIZE_X;
             int y = (int) pos.y / Tile.SIZE_Y;
             this.map.setTile(currentLayer, x + y * map.getTileCountX(), null);
+            hasTileEdited = true;
         }
     }
 
@@ -112,6 +139,11 @@ public class MapEditor extends Editor {
         cam.drawRect(pos, new Vector2(Tile.SIZE_X, Tile.SIZE_Y));
     }
 
+    @Override
+    public void dispose() {
+        super.dispose();
+    }
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -120,7 +152,7 @@ public class MapEditor extends Editor {
         bgTypes = new javax.swing.ButtonGroup();
         cbTilesets = new javax.swing.JComboBox<>();
         scrTileset = new javax.swing.JScrollPane();
-        tilesetPanel = new com.dawnengine.editor.TilesetPanel();
+        tilesetPanel = new com.dawnengine.editor.map.TilesetPanel();
         btnCancel = new javax.swing.JButton();
         btnSave = new javax.swing.JButton();
         btnFill = new javax.swing.JButton();
@@ -139,6 +171,7 @@ public class MapEditor extends Editor {
         rbFringe2 = new javax.swing.JRadioButton();
         pnlAttributes = new javax.swing.JPanel();
         pnlBlock = new javax.swing.JPanel();
+        btnProperties = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         setResizable(false);
@@ -316,42 +349,50 @@ public class MapEditor extends Editor {
 
         pnlOptions.add(pnlBlock, "block");
 
+        btnProperties.setText("Properties");
+        btnProperties.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnPropertiesActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(239, 239, 239)
-                        .addComponent(btnSave, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(scrTileset, javax.swing.GroupLayout.PREFERRED_SIZE, 306, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(btnFill, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btnClear, javax.swing.GroupLayout.DEFAULT_SIZE, 73, Short.MAX_VALUE)
-                                .addComponent(btnCancel, javax.swing.GroupLayout.DEFAULT_SIZE, 73, Short.MAX_VALUE)
-                                .addComponent(rbLayers, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(rbAttributes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addComponent(rbBlock, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(pnlOptions, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(separator1)
-                            .addComponent(separator2, javax.swing.GroupLayout.Alignment.TRAILING))
-                        .addContainerGap())))
-            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(cbTilesets, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(btnProperties)
+                                .addGap(151, 151, 151)
+                                .addComponent(btnSave, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(scrTileset, javax.swing.GroupLayout.PREFERRED_SIZE, 306, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(btnFill, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(btnClear, javax.swing.GroupLayout.DEFAULT_SIZE, 73, Short.MAX_VALUE)
+                                        .addComponent(btnCancel, javax.swing.GroupLayout.DEFAULT_SIZE, 73, Short.MAX_VALUE)
+                                        .addComponent(rbLayers, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(rbAttributes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                    .addComponent(rbBlock, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                        .addComponent(pnlOptions, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(0, 0, Short.MAX_VALUE))
+                                    .addComponent(separator1)
+                                    .addComponent(separator2, javax.swing.GroupLayout.Alignment.TRAILING))
+                                .addContainerGap())))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cbTilesets, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -380,7 +421,8 @@ public class MapEditor extends Editor {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnSave)
-                    .addComponent(btnCancel))
+                    .addComponent(btnCancel)
+                    .addComponent(btnProperties))
                 .addContainerGap())
         );
 
@@ -426,6 +468,7 @@ public class MapEditor extends Editor {
             return;
         }
         this.map.setTiles(currentLayer, null);
+        hasTileEdited = true;
     }//GEN-LAST:event_btnClearActionPerformed
 
     private void btnFillActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFillActionPerformed
@@ -436,6 +479,7 @@ public class MapEditor extends Editor {
         }
         var fillTile = tilesetPanel.getSelectedTiles()[0][0];
         this.map.setTiles(currentLayer, fillTile);
+        hasTileEdited = true;
     }//GEN-LAST:event_btnFillActionPerformed
 
     private void rbLayersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbLayersActionPerformed
@@ -450,12 +494,26 @@ public class MapEditor extends Editor {
         optionsLayout.show(pnlOptions, "block");
     }//GEN-LAST:event_rbBlockActionPerformed
 
+    private void btnPropertiesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPropertiesActionPerformed
+        int result = JOptionPane.showOptionDialog(null, propertiesEditor,
+                "Properties", JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE, null, null, null);
+
+        if (result != JOptionPane.OK_OPTION) {
+            return;
+        }
+
+        hasPropertiesEdited = true;
+        //TODO: process properties
+    }//GEN-LAST:event_btnPropertiesActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup bgLayers;
     private javax.swing.ButtonGroup bgTypes;
     private javax.swing.JButton btnCancel;
     private javax.swing.JButton btnClear;
     private javax.swing.JButton btnFill;
+    private javax.swing.JButton btnProperties;
     private javax.swing.JButton btnSave;
     private javax.swing.JComboBox<String> cbTilesets;
     private javax.swing.JPanel pnlAttributes;
@@ -473,6 +531,6 @@ public class MapEditor extends Editor {
     private javax.swing.JScrollPane scrTileset;
     private javax.swing.JSeparator separator1;
     private javax.swing.JSeparator separator2;
-    private com.dawnengine.editor.TilesetPanel tilesetPanel;
+    private com.dawnengine.editor.map.TilesetPanel tilesetPanel;
     // End of variables declaration//GEN-END:variables
 }

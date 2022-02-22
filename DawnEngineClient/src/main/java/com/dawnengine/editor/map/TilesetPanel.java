@@ -1,4 +1,4 @@
-package com.dawnengine.editor;
+package com.dawnengine.editor.map;
 
 import com.dawnengine.game.map.Tile;
 import com.dawnengine.game.map.Tileset;

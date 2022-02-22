@@ -5,15 +5,15 @@ import com.dawnengine.data.PlayerData;
 import com.dawnengine.managers.MapManager;
 import com.dawnengine.managers.PlayerManager;
 import com.dawnengine.utils.Encrypter;
-import java.util.Date;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class NetworkEvents {
 
     public static void onClientLoginRequest(NetworkContext ctx) {
-        String username = ctx.json().getString("username");
-        String password = ctx.json().getString("password");
+        var req = ctx.request();
+        String username = req.getString("username");
+        String password = req.getString("password");
 
         String invalidReason = null;
 
@@ -30,19 +30,19 @@ public class NetworkEvents {
         if (player != null) {
             player.id(playerID);
         }
-        var responseJSON = new JSONObject();
+        var res = getResponseObject(req);
 
-        responseJSON.put("code", ServerPackets.LOGIN_RESPONSE);
-        responseJSON.put("accept", invalidReason == null);
+        res.put("code", ServerPackets.SERVER_LOGIN_RESPONSE);
+        res.put("accept", invalidReason == null);
         if (invalidReason != null) {
-            responseJSON.put("reason", invalidReason);
-            ctx.connection().sendTCP(responseJSON.toString());
+            res.put("reason", invalidReason);
+            ctx.connection().sendTCP(res.toString());
             return;
         }
 
         { //Telling all other players that a new player has arrived.
             var json = new JSONObject();
-            json.put("code", ServerPackets.ENTITY_INSTANCE);
+            json.put("code", ServerPackets.SERVER_ENTITY_INSTANCE_EVENT);
 
             var array = new JSONArray();
             var obj = new JSONObject();
@@ -55,7 +55,7 @@ public class NetworkEvents {
             array.put(obj);
             json.put("entities", array);
 
-            Server.getServer().sendToMap(player.getMapIndex(), json.toString());
+            Server.getServer().sendToMap(player.getMapIndex(), json);
         }
 
         { //Send to current player all of the data to initialize.
@@ -70,19 +70,20 @@ public class NetworkEvents {
                 json.put("rot", en.getRotation());
                 array.put(json);
             }
-            responseJSON.put("entities", array);
-            responseJSON.put("playerID", playerID);
-            responseJSON.put("mapIndex", player.getMapIndex());
+            res.put("entities", array);
+            res.put("playerID", playerID);
+            res.put("mapIndex", player.getMapIndex());
             //Put more data here if necessary.
 
             Server.addPlayer(player);
-            Server.getServer().sendTo(player.id(), responseJSON.toString());
+            Server.getServer().sendTo(player.id(), res);
         }
     }
 
     public static void onClientRegisterRequest(NetworkContext ctx) {
-        String username = ctx.json().getString("username");
-        String password = ctx.json().getString("password");
+        var req = ctx.request();
+        String username = req.getString("username");
+        String password = req.getString("password");
 
         String invalidReason = null;
 
@@ -92,91 +93,118 @@ public class NetworkEvents {
             invalidReason = "There is already another player with this username!";
         }
 
-        JSONObject obj = new JSONObject();
+        var res = getResponseObject(req);
 
         if (invalidReason == null) {
             int playerID = ctx.connection().getID();
             var pd = new PlayerData(playerID, username, Encrypter.encrypt(password));
             PlayerManager.save(pd);
         } else {
-            obj.put("reason", invalidReason);
+            res.put("reason", invalidReason);
         }
 
-        obj.put("code", ServerPackets.REGISTER_RESPONSE);
-        obj.put("accept", invalidReason == null);
+        res.put("code", ServerPackets.SERVER_REGISTER_RESPONSE);
+        res.put("accept", invalidReason == null);
 
-        ctx.connection().sendTCP(obj.toString());
+        Server.getServer().sendTo(ctx.connection(), res);
     }
 
     public static void onPlayerTransformUpdate(NetworkContext ctx) {
-        var json = ctx.json();
+        var req = ctx.request();
 
         PlayerData pd = Server.getPlayer(ctx.connection().getID());
-        pd.setPosX(json.getFloat("posX"));
-        pd.setPosY(json.getFloat("posY"));
-        pd.setScaleX(json.getFloat("scaX"));
-        pd.setScaleY(json.getFloat("scaY"));
-        pd.setRotation(json.getFloat("rot"));
+        pd.setPosX(req.getFloat("posX"));
+        pd.setPosY(req.getFloat("posY"));
+        pd.setScaleX(req.getFloat("scaX"));
+        pd.setScaleY(req.getFloat("scaY"));
+        pd.setRotation(req.getFloat("rot"));
 
-        json.remove("code");
-        json.put("code", ServerPackets.TRANSFORM_UPDATE);
+        var res = copyRequestObject(req, "posX", "posY", "scaX", "scaY", "rot");
+        res.put("code", ServerPackets.SERVER_TRANSFORM_UPDATE_EVENT);
 //        Server.getServer().sendToAllExceptUDP(
 //                ctx.connection().getID(), json.toString());
     }
 
     public static void onCheckMap(NetworkContext ctx) {
-        var index = ctx.json().getInt("mapIndex");
+        var index = ctx.request().getInt("mapIndex");
         var map = MapManager.load(index);
-        Server.getServer().sendTo(ctx.connection().getID(),
-                new JSONObject()
-                        .put("code", ServerPackets.CHECK_MAP_RESPONSE)
-                        .put("lastRevision", map.getLastRevision())
-                        .put("mapIndex", index).toString());
+
+        var res = getResponseObject(ctx.request());
+        res.put("code", ServerPackets.SERVER_CHECK_MAP_RESPONSE);
+        res.put("mapIndex", index);
+        res.put("lastRevision", map.getLastRevision());
+        Server.getServer().sendTo(ctx.connection().getID(), res);
     }
 
     public static void onGetMap(NetworkContext ctx) {
-        var index = ctx.json().getInt("mapIndex");
+        var index = ctx.request().getInt("mapIndex");
         MapData map = MapManager.load(index);
-        var json = new JSONObject();
-        json.put("code", ServerPackets.GET_MAP_RESPONSE);
 
-        json.put("name", map.getName());
-        json.put("sizeX", map.getSizeX());
-        json.put("sizeY", map.getSizeY());
-        json.put("lastRevision", map.getLastRevision());
-        json.put("tiles", map.getTiles());
-        json.put("mapIndex", index);
+        var res = getResponseObject(ctx.request());
+        res.put("code", ServerPackets.SERVER_GET_MAP_RESPONSE);
 
-        Server.getServer().sendTo(ctx.connection().getID(), json.toString());
+        res.put("mapIndex", index);
+        res.put("name", map.getName());
+        res.put("lastRevision", map.getLastRevision());
+        res.put("moral", map.getMoral());
+        res.put("lUp", map.getLinkUp());
+        res.put("lDown", map.getLinkDown());
+        res.put("lRight", map.getLinkRight());
+        res.put("lLeft", map.getLinkLeft());
+        res.put("sizeX", map.getTileCountX());
+        res.put("sizeY", map.getTileCountY());
+        res.put("tiles", map.getTiles());
+
+        Server.getServer().sendTo(ctx.connection().getID(), res);
     }
 
     public static void onSaveMap(NetworkContext ctx) {
-        var json = ctx.json();
-        
-        var index = json.getInt("mapIndex");
-        var map = new MapData(json.getString("name"),
-                json.getInt("sizeX"), json.getInt("sizeY"),
-                json.getLong("lastRevision"), json.getString("tiles"));
-        
-        MapManager.save(index, map);
+        var req = ctx.request();
 
-        var obj = new JSONObject();
-        obj.put("code", ServerPackets.UPDATE_MAP_RESPONSE);
-        obj.put("accept", true);
-
-        Server.getServer().sendTo(ctx.connection(), obj.toString());
-
-        obj = new JSONObject();
-        obj.put("code", ServerPackets.GET_MAP_RESPONSE);
-        obj.put("name", map.getName());
-        obj.put("sizeX", map.getSizeX());
-        obj.put("sizeY", map.getSizeY());
-        obj.put("lastRevision", map.getLastRevision());
-        obj.put("tiles", map.getTiles());
-        obj.put("mapIndex", index);
+        var index = req.getInt("mapIndex");
+        var mapData = new MapData(req.getString("name"),
+                req.getInt("sizeX"), req.getInt("sizeY"),
+                req.getLong("lastRevision"),
+                req.getInt("moral"), req.getInt("lUp"),
+                req.getInt("lDown"), req.getInt("lRight"),
+                req.getInt("lLeft"), req.getString("tiles"));
+        MapManager.save(index, mapData);
         
-        System.out.println(obj.toString());
-        
-        Server.getServer().sendToAllExcept(ctx.connection(), obj.toString());
+        var res = getResponseObject(req);
+        res.put("code", ServerPackets.SERVER_UPDATE_MAP_RESPONSE);
+        res.put("accept", true);
+        System.out.println(res.toString());
+        Server.getServer().sendTo(ctx.connection(), res);
+
+        res = new JSONObject()
+                .put("code", ServerPackets.SERVER_GET_MAP_EVENT)
+                .put("mapIndex", index)
+                .put("name", mapData.getName())
+                .put("sizeX", mapData.getTileCountX())
+                .put("sizeY", mapData.getTileCountY())
+                .put("lastRevision", mapData.getLastRevision())
+                .put("moral", mapData.getMoral())
+                .put("lUp", mapData.getLinkUp())
+                .put("lDown", mapData.getLinkDown())
+                .put("lRight", mapData.getLinkRight())
+                .put("lLeft", mapData.getLinkLeft())
+                .put("tiles", mapData.getTiles());
+        Server.getServer().sendToMapExcept(ctx.connection(), index, res);
+    }
+
+    private static JSONObject getResponseObject(JSONObject request) {
+        JSONObject res = new JSONObject();
+        if (request.has("reqTime")) {
+            res.put("reqTime", request.getLong("reqTime"));
+        }
+        return res;
+    }
+
+    private static JSONObject copyRequestObject(JSONObject request, String... names) {
+        JSONObject res = new JSONObject(request, names);
+        if (request.has("reqTime")) {
+            res.put("reqTime", request.getLong("reqTime"));
+        }
+        return res;
     }
 }

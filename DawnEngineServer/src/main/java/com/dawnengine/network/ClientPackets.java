@@ -4,26 +4,25 @@ import java.util.function.Consumer;
 
 public enum ClientPackets {
 
-    LOGIN_REQUEST(0xCFFFF001, ctx -> {
+    CLIENT_LOGIN_REQUEST(0xCFFFF001, ctx -> {
         NetworkEvents.onClientLoginRequest(ctx);
     }),
-    REGISTER_REQUEST(0xCFFFF002, ctx -> {
+    CLIENT_REGISTER_REQUEST(0xCFFFF002, ctx -> {
         NetworkEvents.onClientRegisterRequest(ctx);
     }),
-    TRANSFORM_UPDATE(0xCFFFF003, ctx -> {
+    CLIENT_TRANSFORM_UPDATE(0xCFFFF003, ctx -> {
         NetworkEvents.onPlayerTransformUpdate(ctx);
     }),
-    CHECK_MAP_REQUEST(0xCFFFF004, ctx -> {
+    CLIENT_CHECK_MAP_REQUEST(0xCFFFF004, ctx -> {
         NetworkEvents.onCheckMap(ctx);
     }),
-    GET_MAP_REQUEST(0xCFFFF005, ctx -> {
+    CLIENT_GET_MAP_REQUEST(0xCFFFF005, ctx -> {
         NetworkEvents.onGetMap(ctx);
     }),
-    UPDATE_MAP_REQUEST(0xCFFFF006, ctx -> {
+    CLIENT_UPDATE_MAP_REQUEST(0xCFFFF006, ctx -> {
         NetworkEvents.onSaveMap(ctx);
     }),
     ;
-    
 
     public final int code;
     public final Consumer<NetworkContext> event;

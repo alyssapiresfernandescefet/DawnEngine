@@ -17,20 +17,15 @@ public class Tile {
             FRINGE2 = 4,
             LAYERS_NUM = 5;
 
-    private BufferedImage sprite;
+    private final BufferedImage sprite;
     private final int tileIndex, tilesetNum;
-
-    public Tile() {
-        this.tileIndex = 0;
-        this.tilesetNum = 0;
-    }
 
     public Tile(Tileset tileset, int tileIndex) {
         this.sprite = tileset.getImageTile(tileIndex);
         this.tileIndex = tileIndex;
         this.tilesetNum = tileset.getNum();
     }
-    
+
     public Tile(Tileset tileset, int x, int y) {
         this.sprite = tileset.getImageTile(x, y);
         this.tileIndex = x + y * tileset.getTileCountX();
@@ -38,22 +33,15 @@ public class Tile {
     }
 
     public Tile(Tile other) {
-        if (other.sprite != null) {
-            this.sprite = new BufferedImage(other.getWidth(), other.getHeight(),
-                    BufferedImage.TYPE_INT_RGB);
-            var rgb = other.sprite.getRGB(0, 0, getWidth(), getHeight(), null, 0, getWidth());
-            this.sprite.setRGB(0, 0, getWidth(), getHeight(), rgb, 0, getWidth());
-        }
+        this.sprite = new BufferedImage(other.getWidth(), other.getHeight(),
+                BufferedImage.TYPE_INT_RGB);
+        this.sprite.setData(other.sprite.copyData(null));
         this.tileIndex = other.tileIndex;
         this.tilesetNum = other.tilesetNum;
     }
 
     public BufferedImage getSprite() {
         return sprite;
-    }
-
-    public void setSprite(BufferedImage sprite) {
-        this.sprite = sprite;
     }
 
     public int getTileIndex() {
