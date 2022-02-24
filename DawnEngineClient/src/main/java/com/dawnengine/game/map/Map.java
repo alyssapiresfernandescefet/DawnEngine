@@ -1,8 +1,10 @@
 package com.dawnengine.game.map;
 
+import com.dawnengine.math.Vector2;
 import com.dawnengine.serializers.TilesetLoader;
 import com.dawnengine.serializers.objects.MapData;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -10,6 +12,8 @@ import java.util.HashMap;
  * @author alyss
  */
 public class Map {
+
+    public static final int PRE_CULL_LAYERS = 3, POST_CULL_LAYERS = 2;
 
     public static final int IGNORED_COLOR = 0xFFFF00FF;
 
@@ -20,8 +24,9 @@ public class Map {
     private MapMoral moral;
     private int linkUp, linkDown, linkRight, linkLeft;
     private final Tile[][] tiles;
+    private final TileAttribute[] attributes;
 
-    private BufferedImage tilemap;
+    private BufferedImage backgroundTilemap, foregroundTilemap;
 
     public Map(int index, MapData map) {
         this.index = index;
@@ -34,7 +39,10 @@ public class Map {
         this.linkDown = map.getLinkDown();
         this.linkRight = map.getLinkRight();
         this.linkLeft = map.getLinkLeft();
-        this.tiles = new Tile[Tile.LAYERS_NUM][this.tileCountX * this.tileCountY];
+
+        var size = this.tileCountX * this.tileCountY;
+        this.tiles = new Tile[Tile.LAYERS_NUM][size];
+        this.attributes = new TileAttribute[size];
 
         String[] serializedTiles = map.getTiles().split("_");
         var tilesetsMap = new HashMap<Integer, Tileset>(1);
@@ -47,10 +55,13 @@ public class Map {
             var tilesetNum = Integer.parseInt(split[2]);
             var tileIndex = Integer.parseInt(split[3]);
 
-            Tileset tileset;
-            if (tilesetsMap.containsKey(tilesetNum)) {
-                tileset = tilesetsMap.get(tilesetNum);
-            } else {
+            if (split.length > 4) {
+                var attrIndex = Integer.parseInt(split[4]);
+                this.attributes[mapIndex] = TileAttribute.values()[attrIndex];
+            }
+
+            Tileset tileset = tilesetsMap.get(tilesetNum);
+            if (tileset == null) {
                 tileset = TilesetLoader.load(tilesetNum);
                 tilesetsMap.put(tilesetNum, tileset);
             }
@@ -72,6 +83,7 @@ public class Map {
         this.linkRight = other.linkRight;
         this.linkLeft = other.linkLeft;
         this.tiles = new Tile[other.tiles.length][this.tileCountX * this.tileCountY];
+        this.attributes = Arrays.copyOf(other.attributes, other.attributes.length);
         for (int x = 0; x < this.tiles.length; x++) {
             for (int y = 0; y < this.tiles[x].length; y++) {
                 var tile = other.tiles[x][y];
@@ -84,25 +96,14 @@ public class Map {
     }
 
     private void bakeTilemap() {
-        tilemap = new BufferedImage(getTileCountX() * Tile.SIZE_X,
-                getTileCountY() * Tile.SIZE_X, BufferedImage.TYPE_INT_RGB);
-        for (int i = 0; i < tiles.length; i++) {
-            var layer = tiles[i];
-            for (int j = 0; j < layer.length; j++) {
-                var tile = layer[j];
-                if (tile == null) {
-                    continue;
-                }
-                for (int y = 0; y < tile.getHeight(); y++) {
-                    for (int x = 0; x < tile.getWidth(); x++) {
-                        var rgb = tile.getRGB(x, y);
-                        if (rgb != 0 && rgb != IGNORED_COLOR) {
-                            tilemap.setRGB(x + j % getTileCountX() * Tile.SIZE_X,
-                                    y + j / getTileCountX() * Tile.SIZE_Y, rgb);
-                        }
-                    }
-                }
-            }
+        var width = getTileCountX() * Tile.SIZE_X;
+        var height = getTileCountY() * Tile.SIZE_X;
+
+        backgroundTilemap = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        foregroundTilemap = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+
+        for (int i = 0; i < tileCountX * tileCountY; i++) {
+            bakeTilemap(i);
         }
     }
 
@@ -114,12 +115,15 @@ public class Map {
     private void bakeTilemap(int index) {
         var posX = index % getTileCountX() * Tile.SIZE_X;
         var posY = index / getTileCountX() * Tile.SIZE_Y;
+        var data = new int[Tile.SIZE_X * Tile.SIZE_Y];
 
-        tilemap.setRGB(posX, posY, Tile.SIZE_X, Tile.SIZE_Y,
-                new int[Tile.SIZE_X * Tile.SIZE_Y], 0, Tile.SIZE_X);
+        backgroundTilemap.setRGB(posX, posY, Tile.SIZE_X, Tile.SIZE_Y,
+                data, 0, Tile.SIZE_X);
+        foregroundTilemap.setRGB(posX, posY, Tile.SIZE_X, Tile.SIZE_Y,
+                data, 0, Tile.SIZE_X);
 
-        for (int i = 0; i < Tile.LAYERS_NUM; i++) {
-            var tile = tiles[i][index];
+        for (int layerNum = 0; layerNum < Tile.LAYERS_NUM; layerNum++) {
+            var tile = tiles[layerNum][index];
 
             if (tile == null) {
                 continue;
@@ -129,7 +133,11 @@ public class Map {
                 for (int x = 0; x < tile.getWidth(); x++) {
                     var rgb = tile.getRGB(x, y);
                     if (rgb != 0 && rgb != IGNORED_COLOR) {
-                        tilemap.setRGB(x + posX, y + posY, rgb);
+                        if (layerNum < PRE_CULL_LAYERS) {
+                            backgroundTilemap.setRGB(x + posX, y + posY, rgb);
+                        } else {
+                            foregroundTilemap.setRGB(x + posX, y + posY, rgb);
+                        }
                     }
                 }
             }
@@ -147,8 +155,14 @@ public class Map {
                 }
                 str += layerNum + "x"
                         + mapPos + "x"
-                        + tile.getTilesetNum() + "x"
-                        + tile.getTileIndex() + "_";
+                        + tile.getTilesetNum() + "x";
+                var attr = attributes[mapPos];
+                if (attr == null) {
+                    str += tile.getTileIndex() + "_";
+                } else {
+                    str += tile.getTileIndex() + "x";
+                    str += attr.ordinal() + "_";
+                }
             }
         }
         return str.substring(0, str.length() - 1);
@@ -170,6 +184,37 @@ public class Map {
         this.lastRevision = lastRevision;
     }
 
+    public Vector2[] getTilesPositions() {
+        var size = tileCountX * tileCountY;
+        var posisitons = new Vector2[size];
+        for (int i = 0; i < size; i++) {
+            posisitons[i] = new Vector2(
+                    (i % tileCountX) * Tile.SIZE_X + Tile.SIZE_X / 2,
+                    (i / tileCountX) * Tile.SIZE_X + Tile.SIZE_Y / 2);
+        }
+        return posisitons;
+    }
+
+    public Vector2 getTilePosition(Vector2 worldPosition) {
+        int x = (int) worldPosition.x / Tile.SIZE_X;
+        int y = (int) worldPosition.y / Tile.SIZE_Y;
+
+        if (x < 0) {
+            x = 0;
+        } else if (x >= tileCountX) {
+            x = tileCountX - 1;
+        }
+
+        if (y < 0) {
+            y = 0;
+        } else if (y >= tileCountY) {
+            y = tileCountY - 1;
+        }
+
+        return new Vector2(x * Tile.SIZE_X + Tile.SIZE_X * 0.5f,
+                y * Tile.SIZE_Y + Tile.SIZE_Y * 0.5f);
+    }
+
     public void setTile(int layer, int index, Tile tile) {
         tiles[layer][index] = tile;
         bakeTilemap(index);
@@ -183,6 +228,45 @@ public class Map {
         }
     }
 
+    public TileAttribute getAttribute(int index) {
+        var attr = attributes[index];
+        if (attr == null) {
+            attr = TileAttribute.None;
+        }
+        return attr;
+    }
+
+    public TileAttribute getAttribute(Vector2 worldPosition) {
+        int x = (int) worldPosition.x / Tile.SIZE_X;
+        int y = (int) worldPosition.y / Tile.SIZE_Y;
+
+        if (x < 0) {
+            x = 0;
+        } else if (x >= tileCountX) {
+            x = tileCountX - 1;
+        }
+
+        if (y < 0) {
+            y = 0;
+        } else if (y >= tileCountY) {
+            y = tileCountY - 1;
+        }
+
+        var attr = attributes[x + y * tileCountX];
+        if (attr == null) {
+            attr = TileAttribute.None;
+        }
+        return attr;
+    }
+
+    public void setAttribute(int index, TileAttribute attribute) {
+        attributes[index] = attribute;
+    }
+
+    public void setAttribute(int x, int y, TileAttribute attribute) {
+        attributes[x + y * tileCountX] = attribute;
+    }
+
     public int getTileCountX() {
         return tileCountX;
     }
@@ -191,8 +275,12 @@ public class Map {
         return tileCountY;
     }
 
-    public BufferedImage getTilemap() {
-        return tilemap;
+    public BufferedImage getBackgroundTilemap() {
+        return backgroundTilemap;
+    }
+
+    public BufferedImage getForegroundTilemap() {
+        return foregroundTilemap;
     }
 
     public int getIndex() {

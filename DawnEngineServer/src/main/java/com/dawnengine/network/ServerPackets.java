@@ -11,7 +11,7 @@ public final class ServerPackets {
     //Events
     public static final int SERVER_ENTITY_INSTANCE_EVENT = 0xFFFFF101;
     public static final int SERVER_ENTITY_DESTROY_EVENT = 0xFFFFF102;
-    public static final int SERVER_TRANSFORM_UPDATE_EVENT = 0xFFFFF103;
+    public static final int SERVER_PLAYER_MOVE_EVENT = 0xFFFFF103;
     public static final int SERVER_GET_MAP_EVENT = 0xFFFFF104;
     
 }

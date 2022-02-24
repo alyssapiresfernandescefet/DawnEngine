@@ -34,7 +34,7 @@ public class MainFrame extends javax.swing.JFrame {
             return;
         }
         dispose();
-        
+
         var frame = new GameFrame();
         frame.setVisible(true);
         Game.get().start(json);
@@ -85,11 +85,15 @@ public class MainFrame extends javax.swing.JFrame {
 //                client.openConnection();
 //            } catch (IOException ex) {
 //                JOptionPane.showMessageDialog(null, "Unable to connect to the server.");
+//                System.exit(0);
 //                return;
 //            }
-//            client.sendPacket(NetworkPackets.CLIENT_LOGIN_REQUEST,
-//                    new JSONObject().put("username", "asd")
-//                            .put("password", "asd"));
+//            var req = new JSONObject().put("username", "asd")
+//                    .put("password", "asd");
+//            client.sendPacket(NetworkPackets.CLIENT_LOGIN_REQUEST, req,
+//                    NetworkPackets.SERVER_LOGIN_RESPONSE, ctx -> {
+//                        frame.onLoginComplete(ctx.response());
+//                    });
         });
     }
 

@@ -54,7 +54,6 @@ public class Client extends Listener {
     @Override
     public void received(Connection connection, Object object) {
         if (object instanceof String str) {
-            System.out.println("Received: " + str);
             if (Utils.isJSONObject(str)) {
                 var obj = new JSONObject(str);
                 if (!obj.has("code")) {
@@ -102,7 +101,6 @@ public class Client extends Listener {
             obj.put("code", code);
         }
         send(obj.toString());
-        System.out.println("Sent: " + code + obj.toString());
     }
 
     public void sendPacket(int code, JSONObject obj,

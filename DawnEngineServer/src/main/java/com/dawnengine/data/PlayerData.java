@@ -8,14 +8,12 @@ import java.io.Serializable;
  */
 public class PlayerData implements Serializable {
     
-    private int id;
+    private transient int id;
     private final Account account;
     private int mapIndex;
-    private float posX, posY, scaleX, scaleY;
-    private float rotation;
+    private float posX, posY;
 
-    public PlayerData() {
-        this.id = 0;
+    private PlayerData() {
         this.account = null;
     }
 
@@ -23,11 +21,10 @@ public class PlayerData implements Serializable {
         this.account = new Account(username, password);
         this.id = playerID;
         mapIndex = 1;
-        posX = posY = rotation = 0;
-        scaleX = scaleY = 1;
+        posX = posY = 0;
     }
 
-    public int id() {
+    public int getID() {
         return id;
     }
 
@@ -61,30 +58,6 @@ public class PlayerData implements Serializable {
 
     public void setPosY(float posY) {
         this.posY = posY;
-    }
-
-    public float getScaleX() {
-        return scaleX;
-    }
-
-    public void setScaleX(float scaleX) {
-        this.scaleX = scaleX;
-    }
-
-    public float getScaleY() {
-        return scaleY;
-    }
-
-    public void setScaleY(float scaleY) {
-        this.scaleY = scaleY;
-    }
-
-    public float getRotation() {
-        return rotation;
-    }
-
-    public void setRotation(float rotation) {
-        this.rotation = rotation;
     }
 
     

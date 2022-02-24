@@ -1,6 +1,6 @@
 package com.dawnengine.editor;
 
-import com.dawnengine.game.Camera;
+import com.dawnengine.game.graphics.Camera;
 import javax.swing.JFrame;
 
 /**

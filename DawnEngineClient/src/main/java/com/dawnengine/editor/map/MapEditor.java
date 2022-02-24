@@ -1,11 +1,13 @@
 package com.dawnengine.editor.map;
 
 import com.dawnengine.editor.Editor;
-import com.dawnengine.game.Camera;
+import com.dawnengine.game.graphics.Camera;
 import com.dawnengine.game.Game;
 import com.dawnengine.game.Input;
+import com.dawnengine.game.graphics.StringRenderPosition;
 import com.dawnengine.game.map.Map;
 import com.dawnengine.game.map.Tile;
+import com.dawnengine.game.map.TileAttribute;
 import com.dawnengine.math.Vector2;
 import com.dawnengine.network.Client;
 import com.dawnengine.network.NetworkPackets;
@@ -13,23 +15,28 @@ import com.dawnengine.serializers.MapSerializer;
 import com.dawnengine.serializers.TilesetLoader;
 import com.dawnengine.serializers.objects.MapData;
 import java.awt.CardLayout;
+import java.awt.Dialog;
+import java.awt.Font;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Date;
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import org.json.JSONObject;
 
 public class MapEditor extends Editor {
 
+    private static final Font ATTRIBUTES_FONT = new Font("Verdana", Font.PLAIN, 16);
+
     private final MapPropertiesEditor propertiesEditor;
     private final Game game;
     private final Map map, originalMap;
 
-    private boolean hasTileEdited = false, hasPropertiesEdited = false;
-
     private int currentLayer = Tile.GROUND;
+    private TileAttribute currentAttribute = TileAttribute.Block;
     private CardLayout optionsLayout;
+    private String currentOption = "layers";
 
     public MapEditor(Game game) {
         initComponents();
@@ -51,8 +58,9 @@ public class MapEditor extends Editor {
             }
         });
 
-        rbGround.setSelected(true);
+        rbLayerGround.setSelected(true);
         rbLayers.setSelected(true);
+        rbAttributeBlock.setSelected(true);
     }
 
     public void save() {
@@ -60,14 +68,9 @@ public class MapEditor extends Editor {
 
         var req = new JSONObject();
         var index = map.getIndex();
+        var lastRevision = new Date().getTime();
+        map.setLastRevision(lastRevision);
         var mapData = new MapData(map);
-
-        if (hasPropertiesEdited) {
-        } else if (hasTileEdited) {
-        } else {
-            return;
-        }
-
         req.put("name", mapData.getName());
         req.put("moral", mapData.getMoral());
         req.put("lUp", mapData.getLinkUp());
@@ -77,10 +80,21 @@ public class MapEditor extends Editor {
         req.put("sizeX", mapData.getTileCountX());
         req.put("sizeY", mapData.getTileCountY());
         req.put("tiles", mapData.getTiles());
-
         req.put("mapIndex", index);
-        req.put("lastRevision", new Date().getTime());
+        req.put("lastRevision", lastRevision);
 
+        JOptionPane pane = new JOptionPane("Loading...",
+                JOptionPane.INFORMATION_MESSAGE);
+
+        JDialog dialog = new JDialog();
+        dialog.setTitle("Loading Map");
+        dialog.setModalityType(Dialog.ModalityType.MODELESS);
+        dialog.setContentPane(pane);
+        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        dialog.pack();
+        dialog.setLocationRelativeTo(null);
+        dialog.setAlwaysOnTop(true);
+        dialog.setVisible(true);
         Client.getClient().sendPacket(NetworkPackets.CLIENT_UPDATE_MAP_REQUEST, req,
                 NetworkPackets.SERVER_UPDATE_MAP_RESPONSE, ctx -> {
                     var res = ctx.response();
@@ -93,6 +107,7 @@ public class MapEditor extends Editor {
                         return;
                     }
                     MapSerializer.save(index, mapData);
+                    dialog.dispose();
                 });
     }
 
@@ -107,6 +122,20 @@ public class MapEditor extends Editor {
 
     @Override
     public void update() {
+        switch (currentOption) {
+            case "layers":
+                handleLayersUpdate();
+                break;
+            case "attributes":
+                handleAttributesUpdate();
+                break;
+            case "block":
+                handleBlockUpdate();
+                break;
+        }
+    }
+
+    private void handleLayersUpdate() {
         if (((Input.isMouseDragging() && Input.getMouseButton(MouseEvent.BUTTON1))
                 || Input.getMouseButtonDown(MouseEvent.BUTTON1))) {
             var pos = Input.getMousePosition();
@@ -120,23 +149,73 @@ public class MapEditor extends Editor {
                             (x + i) + (y + j) * map.getTileCountX(), tiles[i][j]);
                 }
             }
-            hasTileEdited = true;
         } else if ((Input.isMouseDragging() && Input.getMouseButton(MouseEvent.BUTTON3))
                 || Input.getMouseButtonDown(MouseEvent.BUTTON3)) {
             var pos = Input.getMousePosition();
             int x = (int) pos.x / Tile.SIZE_X;
             int y = (int) pos.y / Tile.SIZE_Y;
             this.map.setTile(currentLayer, x + y * map.getTileCountX(), null);
-            hasTileEdited = true;
         }
+    }
+
+    private void handleAttributesUpdate() {
+        if (((Input.isMouseDragging() && Input.getMouseButton(MouseEvent.BUTTON1))
+                || Input.getMouseButtonDown(MouseEvent.BUTTON1))) {
+            var pos = Input.getMousePosition();
+            int x = (int) pos.x / Tile.SIZE_X;
+            int y = (int) pos.y / Tile.SIZE_Y;
+
+            this.map.setAttribute(x, y, currentAttribute);
+        } else if ((Input.isMouseDragging() && Input.getMouseButton(MouseEvent.BUTTON3))
+                || Input.getMouseButtonDown(MouseEvent.BUTTON3)) {
+            var pos = Input.getMousePosition();
+            int x = (int) pos.x / Tile.SIZE_X;
+            int y = (int) pos.y / Tile.SIZE_Y;
+
+            this.map.setAttribute(x, y, TileAttribute.None);
+        }
+    }
+
+    private void handleBlockUpdate() {
+
     }
 
     @Override
     public void render(Camera cam) {
+        switch (currentOption) {
+            case "layers":
+                handleLayersRender(cam);
+                break;
+            case "attributes":
+                handleAttributesRender(cam);
+                break;
+            case "block":
+                handleBlockRender(cam);
+                break;
+        }
+    }
+
+    private void handleLayersRender(Camera cam) {
         var pos = Input.getMousePosition();
         pos.x = (int) pos.x / Tile.SIZE_X * Tile.SIZE_X;
         pos.y = (int) pos.y / Tile.SIZE_Y * Tile.SIZE_Y;
         cam.drawRect(pos, new Vector2(Tile.SIZE_X, Tile.SIZE_Y));
+    }
+
+    private void handleAttributesRender(Camera cam) {
+        handleLayersRender(cam);
+        var pos = map.getTilesPositions();
+        for (int i = 0; i < pos.length; i++) {
+            var attr = map.getAttribute(i);
+            cam.setColor(attr.color);
+            cam.setFont(ATTRIBUTES_FONT);
+            cam.setStringRenderPosition(StringRenderPosition.Center);
+            cam.drawString(attr.abbreviation, pos[i]);
+        }
+    }
+
+    private void handleBlockRender(Camera cam) {
+
     }
 
     @Override
@@ -150,13 +229,12 @@ public class MapEditor extends Editor {
 
         bgLayers = new javax.swing.ButtonGroup();
         bgTypes = new javax.swing.ButtonGroup();
+        bgAttributes = new javax.swing.ButtonGroup();
         cbTilesets = new javax.swing.JComboBox<>();
         scrTileset = new javax.swing.JScrollPane();
         tilesetPanel = new com.dawnengine.editor.map.TilesetPanel();
         btnCancel = new javax.swing.JButton();
         btnSave = new javax.swing.JButton();
-        btnFill = new javax.swing.JButton();
-        btnClear = new javax.swing.JButton();
         separator2 = new javax.swing.JSeparator();
         rbLayers = new javax.swing.JRadioButton();
         rbAttributes = new javax.swing.JRadioButton();
@@ -164,12 +242,18 @@ public class MapEditor extends Editor {
         separator1 = new javax.swing.JSeparator();
         pnlOptions = new javax.swing.JPanel();
         pnlLayers = new javax.swing.JPanel();
-        rbGround = new javax.swing.JRadioButton();
-        rbMask = new javax.swing.JRadioButton();
-        rbMask2 = new javax.swing.JRadioButton();
-        rbFringe = new javax.swing.JRadioButton();
-        rbFringe2 = new javax.swing.JRadioButton();
+        rbLayerGround = new javax.swing.JRadioButton();
+        rbLayerMask = new javax.swing.JRadioButton();
+        rbLayerMask2 = new javax.swing.JRadioButton();
+        rbLayerFringe = new javax.swing.JRadioButton();
+        rbLayerFringe2 = new javax.swing.JRadioButton();
+        btnLayerClear = new javax.swing.JButton();
+        btnLayerFill = new javax.swing.JButton();
         pnlAttributes = new javax.swing.JPanel();
+        rbAttributeBlock = new javax.swing.JRadioButton();
+        rbAttributeWarp = new javax.swing.JRadioButton();
+        rbAttributeItem = new javax.swing.JRadioButton();
+        rbAttributeNPCBlock = new javax.swing.JRadioButton();
         pnlBlock = new javax.swing.JPanel();
         btnProperties = new javax.swing.JButton();
 
@@ -211,20 +295,6 @@ public class MapEditor extends Editor {
             }
         });
 
-        btnFill.setText("Fill");
-        btnFill.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnFillActionPerformed(evt);
-            }
-        });
-
-        btnClear.setText("Clear");
-        btnClear.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnClearActionPerformed(evt);
-            }
-        });
-
         bgTypes.add(rbLayers);
         rbLayers.setText("Layers");
         rbLayers.addActionListener(new java.awt.event.ActionListener() {
@@ -251,43 +321,57 @@ public class MapEditor extends Editor {
 
         pnlOptions.setLayout(new java.awt.CardLayout());
 
-        bgLayers.add(rbGround);
-        rbGround.setText("Ground");
-        rbGround.addActionListener(new java.awt.event.ActionListener() {
+        bgLayers.add(rbLayerGround);
+        rbLayerGround.setText("Ground");
+        rbLayerGround.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                rbGroundActionPerformed(evt);
+                rbLayerGroundActionPerformed(evt);
             }
         });
 
-        bgLayers.add(rbMask);
-        rbMask.setText("Mask");
-        rbMask.addActionListener(new java.awt.event.ActionListener() {
+        bgLayers.add(rbLayerMask);
+        rbLayerMask.setText("Mask");
+        rbLayerMask.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                rbMaskActionPerformed(evt);
+                rbLayerMaskActionPerformed(evt);
             }
         });
 
-        bgLayers.add(rbMask2);
-        rbMask2.setText("Mask 2");
-        rbMask2.addActionListener(new java.awt.event.ActionListener() {
+        bgLayers.add(rbLayerMask2);
+        rbLayerMask2.setText("Mask 2");
+        rbLayerMask2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                rbMask2ActionPerformed(evt);
+                rbLayerMask2ActionPerformed(evt);
             }
         });
 
-        bgLayers.add(rbFringe);
-        rbFringe.setText("Fringe");
-        rbFringe.addActionListener(new java.awt.event.ActionListener() {
+        bgLayers.add(rbLayerFringe);
+        rbLayerFringe.setText("Fringe");
+        rbLayerFringe.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                rbFringeActionPerformed(evt);
+                rbLayerFringeActionPerformed(evt);
             }
         });
 
-        bgLayers.add(rbFringe2);
-        rbFringe2.setText("Fringe 2");
-        rbFringe2.addActionListener(new java.awt.event.ActionListener() {
+        bgLayers.add(rbLayerFringe2);
+        rbLayerFringe2.setText("Fringe 2");
+        rbLayerFringe2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                rbFringe2ActionPerformed(evt);
+                rbLayerFringe2ActionPerformed(evt);
+            }
+        });
+
+        btnLayerClear.setText("Clear");
+        btnLayerClear.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnLayerClearActionPerformed(evt);
+            }
+        });
+
+        btnLayerFill.setText("Fill");
+        btnLayerFill.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnLayerFillActionPerformed(evt);
             }
         });
 
@@ -297,41 +381,96 @@ public class MapEditor extends Editor {
             pnlLayersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlLayersLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(pnlLayersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(rbMask, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(rbMask2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(rbFringe, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(rbFringe2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(rbGround, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(pnlLayersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(btnLayerClear, javax.swing.GroupLayout.DEFAULT_SIZE, 73, Short.MAX_VALUE)
+                    .addComponent(btnLayerFill, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlLayersLayout.createSequentialGroup()
+                .addGroup(pnlLayersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(rbLayerFringe2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 79, Short.MAX_VALUE)
+                    .addComponent(rbLayerFringe, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(rbLayerMask2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(rbLayerMask, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(rbLayerGround, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         pnlLayersLayout.setVerticalGroup(
             pnlLayersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlLayersLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(rbGround)
+                .addComponent(rbLayerGround)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(rbMask)
+                .addComponent(rbLayerMask)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(rbMask2)
+                .addComponent(rbLayerMask2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(rbFringe)
+                .addComponent(rbLayerFringe)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(rbFringe2)
-                .addContainerGap(180, Short.MAX_VALUE))
+                .addComponent(rbLayerFringe2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 174, Short.MAX_VALUE)
+                .addComponent(btnLayerClear)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnLayerFill))
         );
 
         pnlOptions.add(pnlLayers, "layers");
+
+        bgAttributes.add(rbAttributeBlock);
+        rbAttributeBlock.setText("Block");
+        rbAttributeBlock.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rbAttributeBlockActionPerformed(evt);
+            }
+        });
+
+        bgAttributes.add(rbAttributeWarp);
+        rbAttributeWarp.setText("Warp");
+        rbAttributeWarp.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rbAttributeWarpActionPerformed(evt);
+            }
+        });
+
+        bgAttributes.add(rbAttributeItem);
+        rbAttributeItem.setText("Item");
+        rbAttributeItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rbAttributeItemActionPerformed(evt);
+            }
+        });
+
+        bgAttributes.add(rbAttributeNPCBlock);
+        rbAttributeNPCBlock.setText("NPC Block");
+        rbAttributeNPCBlock.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rbAttributeNPCBlockActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout pnlAttributesLayout = new javax.swing.GroupLayout(pnlAttributes);
         pnlAttributes.setLayout(pnlAttributesLayout);
         pnlAttributesLayout.setHorizontalGroup(
             pnlAttributesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 76, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlAttributesLayout.createSequentialGroup()
+                .addGroup(pnlAttributesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(rbAttributeNPCBlock, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(rbAttributeItem, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(rbAttributeWarp, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(rbAttributeBlock, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         pnlAttributesLayout.setVerticalGroup(
             pnlAttributesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(pnlAttributesLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(rbAttributeBlock)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(rbAttributeWarp)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(rbAttributeItem)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(rbAttributeNPCBlock)
+                .addContainerGap(260, Short.MAX_VALUE))
         );
 
         pnlOptions.add(pnlAttributes, "attributes");
@@ -340,11 +479,11 @@ public class MapEditor extends Editor {
         pnlBlock.setLayout(pnlBlockLayout);
         pnlBlockLayout.setHorizontalGroup(
             pnlBlockLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 76, Short.MAX_VALUE)
+            .addGap(0, 85, Short.MAX_VALUE)
         );
         pnlBlockLayout.setVerticalGroup(
             pnlBlockLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGap(0, 356, Short.MAX_VALUE)
         );
 
         pnlOptions.add(pnlBlock, "block");
@@ -373,23 +512,20 @@ public class MapEditor extends Editor {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
+                                .addComponent(btnCancel, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(pnlOptions, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addContainerGap())
+                            .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                        .addComponent(btnFill, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(btnClear, javax.swing.GroupLayout.DEFAULT_SIZE, 73, Short.MAX_VALUE)
-                                        .addComponent(btnCancel, javax.swing.GroupLayout.DEFAULT_SIZE, 73, Short.MAX_VALUE)
                                         .addComponent(rbLayers, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                         .addComponent(rbAttributes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                                     .addComponent(rbBlock, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                        .addComponent(pnlOptions, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(0, 0, Short.MAX_VALUE))
-                                    .addComponent(separator1)
-                                    .addComponent(separator2, javax.swing.GroupLayout.Alignment.TRAILING))
-                                .addContainerGap())))
+                                .addGap(12, 12, 12))
+                            .addComponent(separator1)
+                            .addComponent(separator2, javax.swing.GroupLayout.Alignment.TRAILING)))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cbTilesets, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addContainerGap())))
@@ -401,9 +537,9 @@ public class MapEditor extends Editor {
                 .addComponent(cbTilesets, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(pnlOptions, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(pnlOptions, javax.swing.GroupLayout.PREFERRED_SIZE, 356, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
                         .addComponent(separator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(rbLayers)
@@ -412,11 +548,7 @@ public class MapEditor extends Editor {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(rbBlock)
                         .addGap(18, 18, 18)
-                        .addComponent(separator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnClear)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnFill))
+                        .addComponent(separator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(scrTileset, javax.swing.GroupLayout.PREFERRED_SIZE, 484, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -441,37 +573,36 @@ public class MapEditor extends Editor {
         save();
     }//GEN-LAST:event_btnSaveActionPerformed
 
-    private void rbGroundActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbGroundActionPerformed
+    private void rbLayerGroundActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbLayerGroundActionPerformed
         currentLayer = Tile.GROUND;
-    }//GEN-LAST:event_rbGroundActionPerformed
+    }//GEN-LAST:event_rbLayerGroundActionPerformed
 
-    private void rbMaskActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbMaskActionPerformed
+    private void rbLayerMaskActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbLayerMaskActionPerformed
         currentLayer = Tile.MASK;
-    }//GEN-LAST:event_rbMaskActionPerformed
+    }//GEN-LAST:event_rbLayerMaskActionPerformed
 
-    private void rbMask2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbMask2ActionPerformed
+    private void rbLayerMask2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbLayerMask2ActionPerformed
         currentLayer = Tile.MASK2;
-    }//GEN-LAST:event_rbMask2ActionPerformed
+    }//GEN-LAST:event_rbLayerMask2ActionPerformed
 
-    private void rbFringeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbFringeActionPerformed
+    private void rbLayerFringeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbLayerFringeActionPerformed
         currentLayer = Tile.FRINGE;
-    }//GEN-LAST:event_rbFringeActionPerformed
+    }//GEN-LAST:event_rbLayerFringeActionPerformed
 
-    private void rbFringe2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbFringe2ActionPerformed
+    private void rbLayerFringe2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbLayerFringe2ActionPerformed
         currentLayer = Tile.FRINGE2;
-    }//GEN-LAST:event_rbFringe2ActionPerformed
+    }//GEN-LAST:event_rbLayerFringe2ActionPerformed
 
-    private void btnClearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearActionPerformed
+    private void btnLayerClearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLayerClearActionPerformed
         if (JOptionPane.showConfirmDialog(null, "Are you sure you want to clear "
                 + "this layer?", "Clear Layer", JOptionPane.YES_NO_OPTION)
                 != JOptionPane.YES_OPTION) {
             return;
         }
         this.map.setTiles(currentLayer, null);
-        hasTileEdited = true;
-    }//GEN-LAST:event_btnClearActionPerformed
+    }//GEN-LAST:event_btnLayerClearActionPerformed
 
-    private void btnFillActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFillActionPerformed
+    private void btnLayerFillActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLayerFillActionPerformed
         if (JOptionPane.showConfirmDialog(null, "Are you sure you want to fill "
                 + "this layer?", "Fill Layer", JOptionPane.YES_NO_OPTION)
                 != JOptionPane.YES_OPTION) {
@@ -479,19 +610,21 @@ public class MapEditor extends Editor {
         }
         var fillTile = tilesetPanel.getSelectedTiles()[0][0];
         this.map.setTiles(currentLayer, fillTile);
-        hasTileEdited = true;
-    }//GEN-LAST:event_btnFillActionPerformed
+    }//GEN-LAST:event_btnLayerFillActionPerformed
 
     private void rbLayersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbLayersActionPerformed
         optionsLayout.show(pnlOptions, "layers");
+        currentOption = "layers";
     }//GEN-LAST:event_rbLayersActionPerformed
 
     private void rbAttributesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbAttributesActionPerformed
         optionsLayout.show(pnlOptions, "attributes");
+        currentOption = "attributes";
     }//GEN-LAST:event_rbAttributesActionPerformed
 
     private void rbBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbBlockActionPerformed
         optionsLayout.show(pnlOptions, "block");
+        currentOption = "block";
     }//GEN-LAST:event_rbBlockActionPerformed
 
     private void btnPropertiesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPropertiesActionPerformed
@@ -502,17 +635,32 @@ public class MapEditor extends Editor {
         if (result != JOptionPane.OK_OPTION) {
             return;
         }
-
-        hasPropertiesEdited = true;
         //TODO: process properties
     }//GEN-LAST:event_btnPropertiesActionPerformed
 
+    private void rbAttributeBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbAttributeBlockActionPerformed
+        currentAttribute = TileAttribute.Block;
+    }//GEN-LAST:event_rbAttributeBlockActionPerformed
+
+    private void rbAttributeWarpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbAttributeWarpActionPerformed
+        currentAttribute = TileAttribute.Block;
+    }//GEN-LAST:event_rbAttributeWarpActionPerformed
+
+    private void rbAttributeItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbAttributeItemActionPerformed
+        currentAttribute = TileAttribute.Block;
+    }//GEN-LAST:event_rbAttributeItemActionPerformed
+
+    private void rbAttributeNPCBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbAttributeNPCBlockActionPerformed
+        currentAttribute = TileAttribute.Block;
+    }//GEN-LAST:event_rbAttributeNPCBlockActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup bgAttributes;
     private javax.swing.ButtonGroup bgLayers;
     private javax.swing.ButtonGroup bgTypes;
     private javax.swing.JButton btnCancel;
-    private javax.swing.JButton btnClear;
-    private javax.swing.JButton btnFill;
+    private javax.swing.JButton btnLayerClear;
+    private javax.swing.JButton btnLayerFill;
     private javax.swing.JButton btnProperties;
     private javax.swing.JButton btnSave;
     private javax.swing.JComboBox<String> cbTilesets;
@@ -520,14 +668,18 @@ public class MapEditor extends Editor {
     private javax.swing.JPanel pnlBlock;
     private javax.swing.JPanel pnlLayers;
     private javax.swing.JPanel pnlOptions;
+    private javax.swing.JRadioButton rbAttributeBlock;
+    private javax.swing.JRadioButton rbAttributeItem;
+    private javax.swing.JRadioButton rbAttributeNPCBlock;
+    private javax.swing.JRadioButton rbAttributeWarp;
     private javax.swing.JRadioButton rbAttributes;
     private javax.swing.JRadioButton rbBlock;
-    private javax.swing.JRadioButton rbFringe;
-    private javax.swing.JRadioButton rbFringe2;
-    private javax.swing.JRadioButton rbGround;
+    private javax.swing.JRadioButton rbLayerFringe;
+    private javax.swing.JRadioButton rbLayerFringe2;
+    private javax.swing.JRadioButton rbLayerGround;
+    private javax.swing.JRadioButton rbLayerMask;
+    private javax.swing.JRadioButton rbLayerMask2;
     private javax.swing.JRadioButton rbLayers;
-    private javax.swing.JRadioButton rbMask;
-    private javax.swing.JRadioButton rbMask2;
     private javax.swing.JScrollPane scrTileset;
     private javax.swing.JSeparator separator1;
     private javax.swing.JSeparator separator2;

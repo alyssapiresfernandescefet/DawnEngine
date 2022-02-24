@@ -4,10 +4,14 @@ import com.dawnengine.math.Vector2;
 import java.awt.Image;
 
 public class Entity implements Sprite {
-    
+
     private final int id;
     private Transform transform;
     private Image sprite;
+
+    private boolean moving = false;
+    private Vector2 goal;
+    private float alpha, speed;
 
     public Entity(int id, Vector2 position) {
         this.id = id;
@@ -51,12 +55,39 @@ public class Entity implements Sprite {
     }
 
     public void update(double dt) {
+        if (moving) {
+            if (Vector2.distance(transform().position(), goal) < 2) {
+                transform().position(goal);
+                moving = false;
+            } else {
+                alpha += dt * speed;
+                Vector2.lerp(transform().position(), goal, alpha);
+            }
+        }
     }
-    
+
     public void networkUpdate() {
-        
+
     }
 
     public void onDestroy() {
+    }
+
+    public void moveTo(Vector2 position) {
+        this.goal = position;
+        alpha = 0f;
+        moving = true;
+    }
+
+    public float getSpeed() {
+        return speed;
+    }
+
+    public void setSpeed(float speed) {
+        this.speed = speed;
+    }
+
+    protected boolean isMoving() {
+        return moving;
     }
 }

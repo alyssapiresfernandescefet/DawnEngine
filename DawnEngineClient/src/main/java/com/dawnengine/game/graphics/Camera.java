@@ -1,8 +1,7 @@
-package com.dawnengine.game;
+package com.dawnengine.game.graphics;
 
 import com.dawnengine.entity.Transform;
 import com.dawnengine.entity.Entity;
-import com.dawnengine.game.map.Map;
 import com.dawnengine.game.map.Tile;
 import com.dawnengine.math.Vector2;
 import java.awt.Canvas;
@@ -30,27 +29,33 @@ public class Camera {
     private Graphics2D g;
     private BufferStrategy bs;
 
+    private StringRenderPosition srt;
+
     public Camera(Canvas targetCanvas) {
         this.targetCanvas = targetCanvas;
+        srt = StringRenderPosition.Leading;
     }
 
     public void begin() {
         bs = targetCanvas.getBufferStrategy();
         g = (Graphics2D) bs.getDrawGraphics();
 
-        HashMap<Key, Object> rh = new HashMap<>(7);
-        rh.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        rh.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
-        rh.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        rh.put(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-        rh.put(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_ENABLE);
-        rh.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        rh.put(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-
-        g.addRenderingHints(rh);
+//        HashMap<Key, Object> rh = new HashMap<>(7);
+//        rh.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+//        rh.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+//        rh.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+//        rh.put(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+//        rh.put(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_ENABLE);
+//        rh.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+//        rh.put(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+//        g.addRenderingHints(rh);
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, targetCanvas.getWidth(), targetCanvas.getHeight());
-        transform.setToScale(g.getTransform().getScaleX(), g.getTransform().getScaleY());
+        var trans = g.getTransform();
+        var x = transform.getTranslateX();
+        var y = transform.getTranslateY();
+        transform.setToScale(trans.getScaleX(), trans.getScaleY());
+        transform.translate(x, y);
         g.setTransform(transform);
         g.setFont(DEFAULT_FONT);
     }
@@ -70,6 +75,13 @@ public class Camera {
 
     public void setStroke(Stroke s) {
         g.setStroke(s);
+    }
+
+    public void setStringRenderPosition(StringRenderPosition srt) {
+        if (srt == null) {
+            srt = StringRenderPosition.Center;
+        }
+        this.srt = srt;
     }
 
     public void drawRect(Vector2 position, Vector2 size) {
@@ -138,12 +150,30 @@ public class Camera {
     }
 
     public void drawString(String str, Vector2 position, float rotation, Vector2 scale) {
-        g.setTransform(new AffineTransform(transform));
+        int x = 0, y = 0;
         Rectangle b = getStringBounds(str, position.x, position.y);
+        switch (srt) {
+            case Center:
+                g.setTransform(new AffineTransform(transform));
+                x -= b.width;
+                break;
+            case Leading:
+                g.setTransform(new AffineTransform(transform));
+                x -= b.width / 2;
+                break;
+            case Center_Fixed:
+                g.setTransform(new AffineTransform());
+                x -= b.width;
+                break;
+            case Leading_Fixed:
+                g.setTransform(new AffineTransform());
+                x -= b.width / 2;
+                break;
+        }
         g.translate(position.x + b.width / 2, position.y + b.height / 2);
         g.rotate(Math.toRadians(rotation));
         g.scale(scale.x, scale.y);
-        g.translate(-(b.width / 2), -(b.height / 2));
+        g.translate(x, y);
         g.drawString(str, 0, 0);
         g.setTransform(transform);
     }
@@ -152,7 +182,14 @@ public class Camera {
         if (entity.sprite() == null) {
             Color old = g.getColor();
             g.setColor(Color.MAGENTA);
-            fillRect(entity.transform().position(), new Vector2(50, 50),
+
+            var sizeX = Tile.SIZE_X;
+            var sizeY = Tile.SIZE_Y;
+
+            var pos = new Vector2(entity.transform().position());
+            pos.x -= sizeX / 2;
+            pos.y -= sizeY / 2;
+            fillRect(pos, new Vector2(sizeX, sizeY),
                     entity.transform().rotation(), entity.transform().scale());
             g.setColor(old);
             return;
@@ -176,6 +213,12 @@ public class Camera {
         FontRenderContext frc = g.getFontRenderContext();
         GlyphVector gv = g.getFont().createGlyphVector(frc, str);
         return gv.getPixelBounds(null, x, y);
+    }
+
+    public void follow(Vector2 position) {
+        int x = (int) (Math.max(0, position.x - targetCanvas.getWidth() / 2));
+        int y = (int) (Math.max(0, position.y - targetCanvas.getHeight() / 2));
+        transform.setToTranslation(-x, -y);
     }
 
 }

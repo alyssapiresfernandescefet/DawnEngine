@@ -10,8 +10,8 @@ public enum ClientPackets {
     CLIENT_REGISTER_REQUEST(0xCFFFF002, ctx -> {
         NetworkEvents.onClientRegisterRequest(ctx);
     }),
-    CLIENT_TRANSFORM_UPDATE(0xCFFFF003, ctx -> {
-        NetworkEvents.onPlayerTransformUpdate(ctx);
+    CLIENT_PLAYER_MOVE(0xCFFFF003, ctx -> {
+        NetworkEvents.onPlayerMove(ctx);
     }),
     CLIENT_CHECK_MAP_REQUEST(0xCFFFF004, ctx -> {
         NetworkEvents.onCheckMap(ctx);

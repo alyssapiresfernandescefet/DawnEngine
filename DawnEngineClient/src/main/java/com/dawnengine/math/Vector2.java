@@ -34,6 +34,19 @@ public class Vector2 implements Serializable {
         return new Vector2(-1, 0);
     }
 
+    public static Vector2 lerp(Vector2 origin, Vector2 target, float alpha) {
+        final float invAlpha = 1.0f - alpha;
+        origin.x = (origin.x * invAlpha) + (target.x * alpha);
+        origin.y = (origin.y * invAlpha) + (target.y * alpha);
+        return origin;
+    }
+
+    public static float distance(Vector2 origin, Vector2 target) {
+        final float x_d = target.x - origin.x;
+        final float y_d = target.y - origin.y;
+        return (float) Math.sqrt(x_d * x_d + y_d * y_d);
+    }
+
     public Vector2() {
         this(0, 0);
     }

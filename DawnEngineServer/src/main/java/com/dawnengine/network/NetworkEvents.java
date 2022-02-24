@@ -10,73 +10,88 @@ import org.json.JSONObject;
 
 public class NetworkEvents {
 
+    public static void onPlayerDisconnect(PlayerData e) {
+        PlayerManager.save(e);
+        var json = new JSONObject();
+        json.put("code", ServerPackets.SERVER_ENTITY_DESTROY_EVENT);
+        var array = new JSONArray();
+        var obj = new JSONObject();
+        obj.put("id", e.getID());
+        array.put(obj);
+        json.put("entities", array);
+        Server.getServer().sendToAll(json);
+    }
+
     public static void onClientLoginRequest(NetworkContext ctx) {
         var req = ctx.request();
+        int playerID = ctx.connection().getID();
         String username = req.getString("username");
         String password = req.getString("password");
 
-        String invalidReason = null;
+        PlayerData player = PlayerManager.load(playerID, username);
+        
+        { //Checking player veracity.
+            String reason = null;
+            if (Server.getPlayer(playerID) != null) {
+                reason = "This account is already active.";
+            } else if (username.isBlank() || password.isBlank()) {
+                reason = "Username or password is blank!";
+            } else if (player == null || !Encrypter.compare(password,
+                    player.getAccount().password)) {
+                reason = "Username or password is invalid!";
+            }
 
-        PlayerData player = PlayerManager.load(username);
-
-        if (username.isBlank() || password.isBlank()) {
-            invalidReason = "Username or password is blank!";
-        } else if (player == null || !Encrypter.compare(password,
-                player.getAccount().password)) {
-            invalidReason = "Username or password is invalid!";
-        }
-
-        int playerID = ctx.connection().getID();
-        if (player != null) {
-            player.id(playerID);
-        }
-        var res = getResponseObject(req);
-
-        res.put("code", ServerPackets.SERVER_LOGIN_RESPONSE);
-        res.put("accept", invalidReason == null);
-        if (invalidReason != null) {
-            res.put("reason", invalidReason);
-            ctx.connection().sendTCP(res.toString());
-            return;
+            if (reason != null) {
+                var res = getResponseObject(req);
+                res.put("code", ServerPackets.SERVER_LOGIN_RESPONSE);
+                res.put("accept", false);
+                res.put("reason", reason);
+                Server.getServer().sendTo(ctx.connection(), res);
+                return;
+            }
         }
 
         { //Telling all other players that a new player has arrived.
-            var json = new JSONObject();
-            json.put("code", ServerPackets.SERVER_ENTITY_INSTANCE_EVENT);
+            var ev = new JSONObject();
+            ev.put("code", ServerPackets.SERVER_ENTITY_INSTANCE_EVENT);
 
             var array = new JSONArray();
             var obj = new JSONObject();
-            obj.put("id", player.id());
+            obj.put("id", player.getID());
             obj.put("posX", 0);
             obj.put("posY", 0);
             obj.put("scaX", 1);
             obj.put("scaY", 1);
             obj.put("rot", 0);
             array.put(obj);
-            json.put("entities", array);
+            ev.put("entities", array);
 
-            Server.getServer().sendToMap(player.getMapIndex(), json);
+            Server.getServer().sendToMap(player.getMapIndex(), ev);
         }
 
         { //Send to current player all of the data to initialize.
+            var res = getResponseObject(req);
+
+            res.put("code", ServerPackets.SERVER_LOGIN_RESPONSE);
+            res.put("accept", true);
             var array = new JSONArray();
             for (var en : Server.getAllPlayers()) {
                 var json = new JSONObject();
-                json.put("id", en.id());
+                json.put("id", en.getID());
                 json.put("posX", en.getPosX());
                 json.put("posY", en.getPosY());
-                json.put("scaX", en.getScaleX());
-                json.put("scaY", en.getScaleY());
-                json.put("rot", en.getRotation());
                 array.put(json);
             }
+            
+            //Put more data here if necessary.
             res.put("entities", array);
             res.put("playerID", playerID);
+            res.put("posX", player.getPosX());
+            res.put("posY", player.getPosY());
             res.put("mapIndex", player.getMapIndex());
-            //Put more data here if necessary.
 
             Server.addPlayer(player);
-            Server.getServer().sendTo(player.id(), res);
+            Server.getServer().sendTo(player.getID(), res);
         }
     }
 
@@ -109,20 +124,16 @@ public class NetworkEvents {
         Server.getServer().sendTo(ctx.connection(), res);
     }
 
-    public static void onPlayerTransformUpdate(NetworkContext ctx) {
+    public static void onPlayerMove(NetworkContext ctx) {
         var req = ctx.request();
-
         PlayerData pd = Server.getPlayer(ctx.connection().getID());
         pd.setPosX(req.getFloat("posX"));
         pd.setPosY(req.getFloat("posY"));
-        pd.setScaleX(req.getFloat("scaX"));
-        pd.setScaleY(req.getFloat("scaY"));
-        pd.setRotation(req.getFloat("rot"));
 
-        var res = copyRequestObject(req, "posX", "posY", "scaX", "scaY", "rot");
-        res.put("code", ServerPackets.SERVER_TRANSFORM_UPDATE_EVENT);
-//        Server.getServer().sendToAllExceptUDP(
-//                ctx.connection().getID(), json.toString());
+        var res = copyRequestObject(req, "posX", "posY", "speed");
+        res.put("code", ServerPackets.SERVER_PLAYER_MOVE_EVENT);
+        res.put("id", ctx.connection().getID());
+        Server.getServer().sendToAllExcept(ctx.connection(), res);
     }
 
     public static void onCheckMap(NetworkContext ctx) {
@@ -169,11 +180,10 @@ public class NetworkEvents {
                 req.getInt("lDown"), req.getInt("lRight"),
                 req.getInt("lLeft"), req.getString("tiles"));
         MapManager.save(index, mapData);
-        
+
         var res = getResponseObject(req);
         res.put("code", ServerPackets.SERVER_UPDATE_MAP_RESPONSE);
         res.put("accept", true);
-        System.out.println(res.toString());
         Server.getServer().sendTo(ctx.connection(), res);
 
         res = new JSONObject()

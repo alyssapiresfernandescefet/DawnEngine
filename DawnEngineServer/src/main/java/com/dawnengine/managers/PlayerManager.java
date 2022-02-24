@@ -26,7 +26,7 @@ public class PlayerManager {
         }
     }
 
-    public static PlayerData load(String username) {
+    public static PlayerData load(int id, String username) {
         File[] users = accountsDir.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File file, String string) {
@@ -41,6 +41,7 @@ public class PlayerManager {
         PlayerData pd = null;
         try (var in = new Input(new FileInputStream(users[0]))) {
             pd = Serializer.readObject(in, PlayerData.class);
+            pd.id(id);
         } catch (Exception ex) {
             Logger.getLogger(PlayerManager.class.getName()).log(Level.SEVERE, null, ex);
         }

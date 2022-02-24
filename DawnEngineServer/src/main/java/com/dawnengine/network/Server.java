@@ -41,17 +41,8 @@ public class Server extends Listener {
     public void disconnected(Connection connection) {
         PlayerData e = players.remove(connection.getID());
         if (e != null) {
-            PlayerManager.save(e);
-            var json = new JSONObject();
-            json.put("code", ServerPackets.SERVER_ENTITY_DESTROY_EVENT);
-            var array = new JSONArray();
-            var obj = new JSONObject();
-            obj.put("id", e.id());
-            array.put(obj);
-            json.put("entities", array);
-            socket.sendToAllTCP(json.toString());
+            NetworkEvents.onPlayerDisconnect(e);
         }
-        //TODO: Remove player from UI player list if exists.
     }
 
     @Override
@@ -101,23 +92,23 @@ public class Server extends Listener {
     public void sendToMap(int mapIndex, JSONObject object) {
         Server.players.values().forEach(p -> {
             if (p.getMapIndex() == mapIndex) {
-                sendTo(p.id(), object);
+                sendTo(p.getID(), object);
             }
         });
     }
 
     public void sendToMapExcept(Connection connection, int mapIndex, JSONObject object) {
         Server.players.values().forEach(p -> {
-            if (p.getMapIndex() == mapIndex && p.id() != connection.getID()) {
-                sendTo(p.id(), object);
+            if (p.getMapIndex() == mapIndex && p.getID() != connection.getID()) {
+                sendTo(p.getID(), object);
             }
         });
     }
 
     public void sendToMapExcept(int connectionID, int mapIndex, JSONObject object) {
         Server.players.values().forEach(p -> {
-            if (p.getMapIndex() == mapIndex && p.id() != connectionID) {
-                sendTo(p.id(), object);
+            if (p.getMapIndex() == mapIndex && p.getID() != connectionID) {
+                sendTo(p.getID(), object);
             }
         });
     }
@@ -140,11 +131,11 @@ public class Server extends Listener {
     }
 
     public static boolean addPlayer(PlayerData p) {
-        return players.put(p.id(), p) != null;
+        return players.put(p.getID(), p) != null;
     }
 
     public static boolean removePlayer(PlayerData p) {
-        return players.remove(p.id(), p);
+        return players.remove(p.getID(), p);
     }
 
     public static boolean removePlayer(int id) {

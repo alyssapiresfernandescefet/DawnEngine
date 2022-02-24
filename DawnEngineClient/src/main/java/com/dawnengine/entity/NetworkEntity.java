@@ -37,14 +37,4 @@ public class NetworkEntity extends Entity {
         }
     }
 
-    protected void invalidateTransform() {
-        invalidate(new EntityPacket(NetworkPackets.CLIENT_TRANSFORM_UPDATE,
-                new JSONObject().put("id", id())
-                        .put("posX", transform().position().x)
-                        .put("posY", transform().position().y)
-                        .put("rot", transform().rotation())
-                        .put("scaX", transform().scale().x)
-                        .put("scaY", transform().scale().y)));
-    }
-
 }

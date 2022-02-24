@@ -1,5 +1,6 @@
 package com.dawnengine.game;
 
+import com.dawnengine.game.graphics.Camera;
 import com.dawnengine.math.Vector2;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
