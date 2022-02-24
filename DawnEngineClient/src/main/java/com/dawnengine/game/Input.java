@@ -19,6 +19,7 @@ public class Input implements KeyListener, MouseListener, FocusListener,
         MouseMotionListener {
 
     private static Camera mainCamera = null;
+    private static Vector2 camPos = Vector2.zero();
 
     private static final ArrayList<Integer> pressedKeys = new ArrayList<>();
     private static final ArrayList<Integer> releasedKeys = new ArrayList<>();
@@ -47,7 +48,7 @@ public class Input implements KeyListener, MouseListener, FocusListener,
         pressedButtons.clear();
         releasedButtons.clear();
         isDragging = false;
-        
+        camPos = mainCamera.position();
     }
 
     public static boolean getKey(int keyCode) {
@@ -132,14 +133,12 @@ public class Input implements KeyListener, MouseListener, FocusListener,
     @Override
     public void mouseDragged(MouseEvent e) {
         isDragging = true;
-        var camPos = mainCamera.position();
         mouseX = (int) (e.getX() - camPos.x);
         mouseY = (int) (e.getY() - camPos.y);
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        var camPos = mainCamera.position();
         mouseX = (int) (e.getX() - camPos.x);
         mouseY = (int) (e.getY() - camPos.y);
     }

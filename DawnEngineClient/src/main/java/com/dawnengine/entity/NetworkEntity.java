@@ -2,9 +2,8 @@ package com.dawnengine.entity;
 
 import com.dawnengine.math.Vector2;
 import com.dawnengine.network.Client;
-import com.dawnengine.network.NetworkPackets;
-import com.dawnengine.network.EntityPacket;
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Objects;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -14,27 +13,30 @@ import org.json.JSONObject;
  */
 public class NetworkEntity extends Entity {
 
-    private final ArrayList<EntityPacket> packets = new ArrayList<>();
+    private final HashMap<Integer, JSONObject> queuedPackets = new HashMap<>();
 
     public NetworkEntity(int id, Vector2 position) {
         super(id, position);
     }
 
-    public void invalidate(EntityPacket packet) {
-        packets.remove(packet);
-        packets.add(packet);
-    }
-    
-    @Override
-    public void networkUpdate() {
-        if (packets.size() > 0) {
-            var tcpArr = new JSONArray();
-            for (EntityPacket p : packets) {
-                tcpArr.put(p.json());
-            }
-            Client.getClient().send(tcpArr.toString());
-            packets.clear();
+    public void invalidate(int code, JSONObject request) {
+        if (!request.has("code")) {
+            request.put("code", code);
         }
+        queuedPackets.put(code, request);
     }
 
+    @Override
+    public void networkUpdate() {
+        if (queuedPackets.isEmpty()) {
+            return;
+        }
+        
+        var arr = new JSONArray();
+        for (JSONObject req : queuedPackets.values()) {
+            arr.put(req);
+        }
+        Client.getClient().sendSerialized(arr.toString());
+        queuedPackets.clear();
+    }
 }

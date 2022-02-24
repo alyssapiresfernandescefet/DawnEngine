@@ -1,11 +1,12 @@
 package com.dawnengine.entity;
 
+import com.dawnengine.core.GameFrame;
 import com.dawnengine.game.Game;
 import com.dawnengine.game.Input;
 import com.dawnengine.game.map.Map;
 import com.dawnengine.game.map.TileAttribute;
+import com.dawnengine.math.Mathf;
 import com.dawnengine.math.Vector2;
-import com.dawnengine.network.EntityPacket;
 import com.dawnengine.network.NetworkPackets;
 import java.awt.event.KeyEvent;
 import org.json.JSONObject;
@@ -37,24 +38,29 @@ public class LocalPlayer extends NetworkEntity {
     public void update(double dt) {
         super.update(dt);
         if (!isMoving()) {
-            int x = 0;
-            int y = 0;
             if (Input.getKey(KeyEvent.VK_W)) {
-                y = -32;
+                setGoal(0, -32);
             } else if (Input.getKey(KeyEvent.VK_S)) {
-                y = 32;
+                setGoal(0, 32);
             } else if (Input.getKey(KeyEvent.VK_A)) {
-                x = -32;
+                setGoal(-32, 0);
             } else if (Input.getKey(KeyEvent.VK_D)) {
-                x = 32;
-            }
-            if (x != 0 || y != 0) {
-                setGoal(x, y);
+                setGoal(32, 0);
             }
         }
-        Game.get().getMainCamera().follow(transform().position());
+
+        var map = Game.get().getMap();
+        if (map != null) {
+            var worldSize = map.getWorldSize();
+            var pos = new Vector2(transform().position());
+            var gw = GameFrame.GAME_WIDTH * 0.5f;
+            var gh = GameFrame.GAME_HEIGHT * 0.5f;
+            pos.x = Mathf.clamp(pos.x, gw, worldSize.width - gw);
+            pos.y = Mathf.clamp(pos.y, gh, worldSize.height - gh);
+            Game.get().getMainCamera().follow(pos);
+        }
     }
-    
+
     private void setGoal(int dx, int dy) {
         Map map = Game.get().getMap();
 
@@ -66,20 +72,19 @@ public class LocalPlayer extends NetworkEntity {
         if (map.getAttribute(desirableGoal) == TileAttribute.Block) {
             return;
         }
-        
+
+        var speed = 1.5f;
         if (Input.getKey(KeyEvent.VK_SHIFT)) {
-            setSpeed(5f);
-        } else {
-            setSpeed(1.5f);
+            speed = 5f;
         }
 
-        moveTo(desirableGoal);
+        moveTo(desirableGoal, speed);
 
         var req = new JSONObject();
         req.put("posX", desirableGoal.x);
         req.put("posY", desirableGoal.y);
-        req.put("speed", getSpeed());
-        invalidate(new EntityPacket(NetworkPackets.CLIENT_PLAYER_MOVE, req));
+        req.put("speed", speed);
+        invalidate(NetworkPackets.CLIENT_PLAYER_MOVE, req);
     }
 
 }

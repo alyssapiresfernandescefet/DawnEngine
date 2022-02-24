@@ -10,14 +10,11 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.RenderingHints.Key;
 import java.awt.Stroke;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferStrategy;
-import java.util.HashMap;
 
 public class Camera {
 
@@ -150,7 +147,7 @@ public class Camera {
     }
 
     public void drawString(String str, Vector2 position, float rotation, Vector2 scale) {
-        int x = 0, y = 0;
+        int x = 0;
         Rectangle b = getStringBounds(str, position.x, position.y);
         switch (srt) {
             case Center:
@@ -173,7 +170,7 @@ public class Camera {
         g.translate(position.x + b.width / 2, position.y + b.height / 2);
         g.rotate(Math.toRadians(rotation));
         g.scale(scale.x, scale.y);
-        g.translate(x, y);
+        g.translate(x, 0);
         g.drawString(str, 0, 0);
         g.setTransform(transform);
     }
@@ -216,9 +213,13 @@ public class Camera {
     }
 
     public void follow(Vector2 position) {
-        int x = (int) (Math.max(0, position.x - targetCanvas.getWidth() / 2));
-        int y = (int) (Math.max(0, position.y - targetCanvas.getHeight() / 2));
-        transform.setToTranslation(-x, -y);
+        transform.setToTranslation(targetCanvas.getWidth() * 0.5f - position.x,
+                targetCanvas.getHeight() * 0.5f - position.y);
+    }
+
+    public Vector2 center() {
+        return new Vector2(transform.getScaleX() * targetCanvas.getWidth() * 0.5f,
+                transform.getScaleY() * targetCanvas.getHeight() * 0.5f);
     }
 
 }

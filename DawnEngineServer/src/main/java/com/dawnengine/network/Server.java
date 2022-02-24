@@ -1,7 +1,6 @@
 package com.dawnengine.network;
 
 import com.dawnengine.data.PlayerData;
-import com.dawnengine.managers.PlayerManager;
 import com.dawnengine.utils.Utils;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;

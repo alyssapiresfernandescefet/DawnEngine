@@ -132,7 +132,7 @@ public class Game extends Canvas implements GameEvents {
             mainCamera.drawImage(map.getForegroundTilemap(), Vector2.zero());
             mainCamera.setColor(Color.WHITE);
             mainCamera.setStringRenderPosition(StringRenderPosition.Center_Fixed);
-            mainCamera.drawString(map.getName(), new Vector2(590, 10));
+            mainCamera.drawString(map.getName(), new Vector2(mainCamera.center().x, 10));
         }
 
         adminFrame.renderEditor(mainCamera);

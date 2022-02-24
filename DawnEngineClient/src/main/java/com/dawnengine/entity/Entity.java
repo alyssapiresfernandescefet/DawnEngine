@@ -73,18 +73,11 @@ public class Entity implements Sprite {
     public void onDestroy() {
     }
 
-    public void moveTo(Vector2 position) {
+    public void moveTo(Vector2 position, float speed) {
         this.goal = position;
+        this.speed = speed;
         alpha = 0f;
         moving = true;
-    }
-
-    public float getSpeed() {
-        return speed;
-    }
-
-    public void setSpeed(float speed) {
-        this.speed = speed;
     }
 
     protected boolean isMoving() {

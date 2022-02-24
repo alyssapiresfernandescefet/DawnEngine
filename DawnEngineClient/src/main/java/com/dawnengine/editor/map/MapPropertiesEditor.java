@@ -2,6 +2,7 @@ package com.dawnengine.editor.map;
 
 import com.dawnengine.game.map.MapMoral;
 import com.dawnengine.game.map.Map;
+import java.awt.Dimension;
 
 public class MapPropertiesEditor extends javax.swing.JPanel {
 
@@ -12,9 +13,44 @@ public class MapPropertiesEditor extends javax.swing.JPanel {
         for (MapMoral moral : MapMoral.values()) {
             cmbMoral.addItem(moral);
         }
+        lblCurrentMap.setText("Current Map: " + map.getIndex());
         txtName.setText(map.getName());
+        cmbMoral.setSelectedIndex(map.getMoral().ordinal());
+        txtLinkUp.setText(Integer.toString(map.getLinkUp()));
+        txtLinkBottom.setText(Integer.toString(map.getLinkDown()));
+        txtLinkRight.setText(Integer.toString(map.getLinkRight()));
+        txtLinkLeft.setText(Integer.toString(map.getLinkLeft()));
         txtSizeX.setText(Integer.toString(map.getTileCountX()));
         txtSizeY.setText(Integer.toString(map.getTileCountY()));
+    }
+
+    public String getMapName() {
+        return txtName.getText();
+    }
+    
+    public int getLinkUp() {
+        return Integer.parseInt(txtLinkUp.getText());
+    }
+    
+    public int getLinkDown() {
+        return Integer.parseInt(txtLinkBottom.getText());
+    }
+    
+    public int getLinkRight() {
+        return Integer.parseInt(txtLinkRight.getText());
+    }
+    
+    public int getLinkLeft() {
+        return Integer.parseInt(txtLinkLeft.getText());
+    }
+
+    public MapMoral getMoral() {
+        return (MapMoral) cmbMoral.getModel().getSelectedItem();
+    }
+
+    public Dimension getMapSize() {
+        return new Dimension(Integer.parseInt(txtSizeX.getText()),
+                Integer.parseInt(txtSizeY.getText()));
     }
 
     @SuppressWarnings("unchecked")
@@ -154,7 +190,7 @@ public class MapPropertiesEditor extends javax.swing.JPanel {
                         .addComponent(lblSizeY)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtSizeY)))
-                .addContainerGap(182, Short.MAX_VALUE))
+                .addContainerGap(140, Short.MAX_VALUE))
         );
         pnlSizeLayout.setVerticalGroup(
             pnlSizeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -179,11 +215,11 @@ public class MapPropertiesEditor extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblName)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtName, javax.swing.GroupLayout.DEFAULT_SIZE, 368, Short.MAX_VALUE))
+                        .addComponent(txtName, javax.swing.GroupLayout.DEFAULT_SIZE, 326, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(pnlLinks, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(pnlLinks, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(pnlSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(pnlSize, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
@@ -198,13 +234,10 @@ public class MapPropertiesEditor extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(pnlLinks, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
                         .addComponent(pnlSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pnlSize, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addComponent(pnlSize, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(pnlLinks, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
     }// </editor-fold>//GEN-END:initComponents
 

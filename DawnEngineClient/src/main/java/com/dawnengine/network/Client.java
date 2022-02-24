@@ -88,7 +88,7 @@ public class Client extends Listener {
         }
     }
 
-    public int send(String serialized) {
+    public int sendSerialized(String serialized) {
         return socket.sendTCP(serialized);
     }
 
@@ -100,7 +100,7 @@ public class Client extends Listener {
         if (!obj.has("code")) {
             obj.put("code", code);
         }
-        send(obj.toString());
+        sendSerialized(obj.toString());
     }
 
     public void sendPacket(int code, JSONObject obj,

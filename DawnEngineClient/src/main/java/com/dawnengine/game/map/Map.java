@@ -3,6 +3,7 @@ package com.dawnengine.game.map;
 import com.dawnengine.math.Vector2;
 import com.dawnengine.serializers.TilesetLoader;
 import com.dawnengine.serializers.objects.MapData;
+import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,8 +24,8 @@ public class Map {
     private int tileCountX, tileCountY;
     private MapMoral moral;
     private int linkUp, linkDown, linkRight, linkLeft;
-    private final Tile[][] tiles;
-    private final TileAttribute[] attributes;
+    private Tile[][] tiles;
+    private TileAttribute[] attributes;
 
     private BufferedImage backgroundTilemap, foregroundTilemap;
 
@@ -96,8 +97,8 @@ public class Map {
     }
 
     private void bakeTilemap() {
-        var width = getTileCountX() * Tile.SIZE_X;
-        var height = getTileCountY() * Tile.SIZE_X;
+        var width = tileCountX * Tile.SIZE_X;
+        var height = tileCountY * Tile.SIZE_Y;
 
         backgroundTilemap = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         foregroundTilemap = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -113,8 +114,8 @@ public class Map {
      * @param index the index of the tile to be baked into the tilemap.
      */
     private void bakeTilemap(int index) {
-        var posX = index % getTileCountX() * Tile.SIZE_X;
-        var posY = index / getTileCountX() * Tile.SIZE_Y;
+        var posX = index % tileCountX * Tile.SIZE_X;
+        var posY = index / tileCountX * Tile.SIZE_Y;
         var data = new int[Tile.SIZE_X * Tile.SIZE_Y];
 
         backgroundTilemap.setRGB(posX, posY, Tile.SIZE_X, Tile.SIZE_Y,
@@ -129,15 +130,15 @@ public class Map {
                 continue;
             }
 
-            for (int y = 0; y < tile.getHeight(); y++) {
-                for (int x = 0; x < tile.getWidth(); x++) {
-                    var rgb = tile.getRGB(x, y);
-                    if (rgb != 0 && rgb != IGNORED_COLOR) {
-                        if (layerNum < PRE_CULL_LAYERS) {
-                            backgroundTilemap.setRGB(x + posX, y + posY, rgb);
-                        } else {
-                            foregroundTilemap.setRGB(x + posX, y + posY, rgb);
-                        }
+            for (int i = 0; i < Tile.SIZE_X * Tile.SIZE_Y; i++) {
+                var x = i % Tile.SIZE_X;
+                var y = i / Tile.SIZE_X;
+                var rgb = tile.getSprite().getRGB(x, y);
+                if (rgb != 0 && rgb != IGNORED_COLOR) {
+                    if (layerNum < PRE_CULL_LAYERS) {
+                        backgroundTilemap.setRGB(x + posX, y + posY, rgb);
+                    } else {
+                        foregroundTilemap.setRGB(x + posX, y + posY, rgb);
                     }
                 }
             }
@@ -265,6 +266,41 @@ public class Map {
 
     public void setAttribute(int x, int y, TileAttribute attribute) {
         attributes[x + y * tileCountX] = attribute;
+    }
+
+    public Dimension getWorldSize() {
+        return new Dimension(tileCountX * Tile.SIZE_X, tileCountY * Tile.SIZE_Y);
+    }
+
+    public void setSize(Dimension size) {
+        var newTileCountX = size.width;
+        var newTileCountY = size.height;
+        var newSize = newTileCountX * newTileCountY;
+
+        var attrAux = this.attributes;
+        this.attributes = new TileAttribute[newSize];
+
+        for (int layerNum = 0; layerNum < Tile.LAYERS_NUM; layerNum++) {
+            var tilesAux = this.tiles[layerNum];
+            this.tiles[layerNum] = new Tile[newSize];
+            var layerTiles = this.tiles[layerNum];
+
+            for (int tileNum = 0; tileNum < tileCountX * tileCountY; tileNum++) {
+                var x = tileNum % tileCountX;
+                var y = tileNum / tileCountX;
+                var newPos = x + y * newTileCountX;
+                var oldPos = x + y * tileCountX;
+
+                if (newPos < newSize) {
+                    layerTiles[newPos] = tilesAux[oldPos];
+                    this.attributes[newPos] = attrAux[oldPos];
+                }
+            }
+        }
+
+        tileCountX = newTileCountX;
+        tileCountY = newTileCountY;
+        bakeTilemap();
     }
 
     public int getTileCountX() {

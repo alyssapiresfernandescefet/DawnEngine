@@ -29,7 +29,7 @@ public class MapEditor extends Editor {
 
     private static final Font ATTRIBUTES_FONT = new Font("Verdana", Font.PLAIN, 16);
 
-    private final MapPropertiesEditor propertiesEditor;
+    private final MapPropertiesEditor props;
     private final Game game;
     private final Map map, originalMap;
 
@@ -44,7 +44,7 @@ public class MapEditor extends Editor {
         this.game = game;
         this.map = game.getMap();
         this.originalMap = new Map(map);
-        this.propertiesEditor = new MapPropertiesEditor(this.map);
+        this.props = new MapPropertiesEditor(this.map);
 
         var files = TilesetLoader.listAll();
         for (int i = 0; i < files.length; i++) {
@@ -628,14 +628,21 @@ public class MapEditor extends Editor {
     }//GEN-LAST:event_rbBlockActionPerformed
 
     private void btnPropertiesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPropertiesActionPerformed
-        int result = JOptionPane.showOptionDialog(null, propertiesEditor,
+        int result = JOptionPane.showOptionDialog(null, props,
                 "Properties", JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.PLAIN_MESSAGE, null, null, null);
 
         if (result != JOptionPane.OK_OPTION) {
             return;
         }
-        //TODO: process properties
+        
+        map.setName(props.getMapName());
+        map.setLinkUp(props.getLinkUp());
+        map.setLinkDown(props.getLinkDown());
+        map.setLinkRight(props.getLinkRight());
+        map.setLinkLeft(props.getLinkLeft());
+        map.setMoral(props.getMoral());
+        map.setSize(props.getMapSize());
     }//GEN-LAST:event_btnPropertiesActionPerformed
 
     private void rbAttributeBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbAttributeBlockActionPerformed

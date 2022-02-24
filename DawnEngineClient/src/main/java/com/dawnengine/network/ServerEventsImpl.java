@@ -37,9 +37,8 @@ public class ServerEventsImpl {
         var res = ctx.response();
         var entity = Game.findEntityByID(res.getInt("id"));
         if (entity != null) {
-            entity.setSpeed(res.getFloat("speed"));
             entity.moveTo(new Vector2(res.getFloat("posX"),
-                    res.getFloat("posY")));
+                    res.getFloat("posY")), res.getFloat("speed"));
         }
     }
 

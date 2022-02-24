@@ -33,7 +33,7 @@ public class Tile {
     }
 
     public Tile(Tile other) {
-        this.sprite = new BufferedImage(other.getWidth(), other.getHeight(),
+        this.sprite = new BufferedImage(Tile.SIZE_X, Tile.SIZE_Y,
                 BufferedImage.TYPE_INT_RGB);
         this.sprite.setData(other.sprite.copyData(null));
         this.tileIndex = other.tileIndex;
@@ -50,17 +50,5 @@ public class Tile {
 
     public int getTilesetNum() {
         return tilesetNum;
-    }
-
-    public int getWidth() {
-        return sprite.getWidth();
-    }
-
-    public int getHeight() {
-        return sprite.getHeight();
-    }
-
-    public int getRGB(int x, int y) {
-        return sprite.getRGB(x, y);
     }
 }
