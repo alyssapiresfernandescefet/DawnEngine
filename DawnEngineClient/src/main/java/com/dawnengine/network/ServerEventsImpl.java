@@ -25,7 +25,7 @@ public class ServerEventsImpl {
                 return;
             }
 
-            Game.removeEntity(obj.getInt("id"));
+            Game.get().removeEntity(obj.getInt("id"));
         }
     }
 
@@ -35,7 +35,7 @@ public class ServerEventsImpl {
 
     static void onPlayerMove(NetworkContext ctx) {
         var res = ctx.response();
-        var entity = Game.findEntityByID(res.getInt("id"));
+        var entity = Game.get().findEntityByID(res.getInt("id"));
         if (entity != null) {
             entity.moveTo(new Vector2(res.getFloat("posX"),
                     res.getFloat("posY")), res.getFloat("speed"));
@@ -56,11 +56,9 @@ public class ServerEventsImpl {
             if (obj == null) {
                 return;
             }
-
+            
             var pos = new Vector2(obj.getFloat("posX"), obj.getFloat("posY"));
-            var scale = new Vector2(obj.getFloat("scaX"), obj.getFloat("scaY"));
-            var rot = obj.getFloat("rot");
-            Game.addEntity(new Entity(obj.getInt("id"), pos, scale, rot));
+            Game.get().addEntity(new Entity(obj.getInt("id"), pos));
         }
     }
 

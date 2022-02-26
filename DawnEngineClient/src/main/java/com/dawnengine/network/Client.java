@@ -28,7 +28,7 @@ public class Client extends Listener {
     private com.esotericsoftware.kryonet.Client socket;
 
     private Client() {
-        socket = new com.esotericsoftware.kryonet.Client(65536, 8192);
+        socket = new com.esotericsoftware.kryonet.Client(65536, 65536);
         socket.addListener(this);
         socket.start();
     }

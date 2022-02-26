@@ -2,8 +2,9 @@ package com.dawnengine.entity;
 
 import com.dawnengine.math.Vector2;
 import com.dawnengine.network.Client;
+import com.dawnengine.network.NetworkContext;
 import java.util.HashMap;
-import java.util.Objects;
+import java.util.function.Consumer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -13,7 +14,7 @@ import org.json.JSONObject;
  */
 public class NetworkEntity extends Entity {
 
-    private final HashMap<Integer, JSONObject> queuedPackets = new HashMap<>();
+    private final HashMap<Integer, Request> queuedPackets = new HashMap<>();
 
     public NetworkEntity(int id, Vector2 position) {
         super(id, position);
@@ -23,7 +24,16 @@ public class NetworkEntity extends Entity {
         if (!request.has("code")) {
             request.put("code", code);
         }
-        queuedPackets.put(code, request);
+        queuedPackets.put(code, new Request(code, request));
+    }
+
+    public void invalidate(int code, JSONObject request, int intendedResponse,
+            Consumer<NetworkContext> onResponse) {
+        if (!request.has("code")) {
+            request.put("code", code);
+        }
+        queuedPackets.put(code, new Request(code, request,
+                intendedResponse, onResponse));
     }
 
     @Override
@@ -32,11 +42,40 @@ public class NetworkEntity extends Entity {
             return;
         }
         
-        var arr = new JSONArray();
-        for (JSONObject req : queuedPackets.values()) {
-            arr.put(req);
+        JSONArray arr = new JSONArray();
+        for (Request req : queuedPackets.values()) {
+            if (req.intendedResponse > 0) {
+                Client.getClient().sendPacket(req.requestCode, req.data, 
+                        req.intendedResponse, req.onResponse);
+            }
+            else {
+                arr.put(req.data);
+            }
         }
-        Client.getClient().sendSerialized(arr.toString());
         queuedPackets.clear();
+        Client.getClient().sendSerialized(arr.toString());
+    }
+
+    private class Request {
+
+        public final int requestCode;
+        public final JSONObject data;
+        public final int intendedResponse;
+        public final Consumer<NetworkContext> onResponse;
+
+        public Request(int requestCode, JSONObject data) {
+            this.requestCode = requestCode;
+            this.data = data;
+            this.intendedResponse = 0;
+            this.onResponse = null;
+        }
+
+        public Request(int requestCode, JSONObject data, int intendedResponse,
+                Consumer<NetworkContext> onResponse) {
+            this.requestCode = requestCode;
+            this.data = data;
+            this.intendedResponse = intendedResponse;
+            this.onResponse = onResponse;
+        }
     }
 }

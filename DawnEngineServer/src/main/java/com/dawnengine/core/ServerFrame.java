@@ -1,17 +1,22 @@
 package com.dawnengine.core;
 
-import com.dawnengine.network.Server;
+import com.esotericsoftware.minlog.Log;
+import java.io.IOException;
+import javax.swing.JOptionPane;
 
 public class ServerFrame extends javax.swing.JFrame {
 
-    private static ServerFrame instance;
+    private final Server server;
 
-    public ServerFrame() {
+    public ServerFrame() throws IOException {
         initComponents();
+        server = new Server();
+        
+        server.open();
     }
 
     private void exit() {
-        Server.close();
+        server.close();
         dispose();
     }
 
@@ -46,10 +51,6 @@ public class ServerFrame extends javax.swing.JFrame {
         exit();
     }//GEN-LAST:event_formWindowClosing
 
-    public static ServerFrame getInstance() {
-        return instance;
-    }
-
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -73,13 +74,15 @@ public class ServerFrame extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(ServerFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-
+        Log.set(Log.LEVEL_DEBUG);
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                instance = new ServerFrame();
+        java.awt.EventQueue.invokeLater(() -> {
+            try {
+                ServerFrame instance = new ServerFrame();
                 instance.setVisible(true);
-                Server.open();
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(null,
+                        "Server could not be initialized.");
             }
         });
     }

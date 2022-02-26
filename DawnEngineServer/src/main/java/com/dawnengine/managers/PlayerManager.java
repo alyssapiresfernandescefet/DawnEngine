@@ -41,7 +41,7 @@ public class PlayerManager {
         PlayerData pd = null;
         try (var in = new Input(new FileInputStream(users[0]))) {
             pd = Serializer.readObject(in, PlayerData.class);
-            pd.id(id);
+            pd.setID(id);
         } catch (Exception ex) {
             Logger.getLogger(PlayerManager.class.getName()).log(Level.SEVERE, null, ex);
         }

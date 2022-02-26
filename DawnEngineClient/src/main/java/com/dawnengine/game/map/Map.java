@@ -14,7 +14,7 @@ import java.util.HashMap;
  */
 public class Map {
 
-    public static final int PRE_CULL_LAYERS = 3, POST_CULL_LAYERS = 2;
+    public static final int BACKGROUND_LAYERS = 3, FOREGROUND_LAYERS = 2;
 
     public static final int IGNORED_COLOR = 0xFFFF00FF;
 
@@ -23,7 +23,7 @@ public class Map {
     private long lastRevision;
     private int tileCountX, tileCountY;
     private MapMoral moral;
-    private int linkUp, linkDown, linkRight, linkLeft;
+    private MapLink[] links;
     private Tile[][] tiles;
     private TileAttribute[] attributes;
 
@@ -36,10 +36,11 @@ public class Map {
         this.tileCountX = map.getTileCountX();
         this.tileCountY = map.getTileCountY();
         this.moral = MapMoral.values()[map.getMoral()];
-        this.linkUp = map.getLinkUp();
-        this.linkDown = map.getLinkDown();
-        this.linkRight = map.getLinkRight();
-        this.linkLeft = map.getLinkLeft();
+        this.links = new MapLink[]{
+            new MapLink(map.getLinkUp(), MapLink.UP),
+            new MapLink(map.getLinkDown(), MapLink.DOWN),
+            new MapLink(map.getLinkRight(), MapLink.RIGHT),
+            new MapLink(map.getLinkLeft(), MapLink.LEFT),};
 
         var size = this.tileCountX * this.tileCountY;
         this.tiles = new Tile[Tile.LAYERS_NUM][size];
@@ -79,10 +80,7 @@ public class Map {
         this.tileCountX = other.tileCountX;
         this.tileCountY = other.tileCountY;
         this.moral = other.moral;
-        this.linkUp = other.linkUp;
-        this.linkDown = other.linkDown;
-        this.linkRight = other.linkRight;
-        this.linkLeft = other.linkLeft;
+        this.links = other.links;
         this.tiles = new Tile[other.tiles.length][this.tileCountX * this.tileCountY];
         this.attributes = Arrays.copyOf(other.attributes, other.attributes.length);
         for (int x = 0; x < this.tiles.length; x++) {
@@ -135,7 +133,7 @@ public class Map {
                 var y = i / Tile.SIZE_X;
                 var rgb = tile.getSprite().getRGB(x, y);
                 if (rgb != 0 && rgb != IGNORED_COLOR) {
-                    if (layerNum < PRE_CULL_LAYERS) {
+                    if (layerNum < BACKGROUND_LAYERS) {
                         backgroundTilemap.setRGB(x + posX, y + posY, rgb);
                     } else {
                         foregroundTilemap.setRGB(x + posX, y + posY, rgb);
@@ -143,6 +141,40 @@ public class Map {
                 }
             }
         }
+    }
+
+    public MapLink getLink(Vector2 worldPosition) {
+        int x = (int) worldPosition.x;
+        int y = (int) worldPosition.y;
+
+        if (x < 0) {
+            return links[MapLink.LEFT];
+        } else if (y < 0) {
+            return links[MapLink.UP];
+        }
+        
+        x /= Tile.SIZE_X;
+        y /= Tile.SIZE_Y;
+
+        if (x >= tileCountX) {
+            return links[MapLink.RIGHT];
+        } else if (y >= tileCountY) {
+            return links[MapLink.DOWN];
+        }
+
+        return null;
+    }
+
+    public MapLink getLink(int direction) {
+        return this.links[direction];
+    }
+
+    public void setLink(int direction, int index) {
+        this.links[direction].setMapIndex(index);
+    }
+
+    public void setLinks(MapLink[] links) {
+        this.links = links;
     }
 
     public String getSerializedTiles() {
@@ -331,35 +363,4 @@ public class Map {
         this.moral = moral;
     }
 
-    public int getLinkUp() {
-        return linkUp;
-    }
-
-    public void setLinkUp(int linkUp) {
-        this.linkUp = linkUp;
-    }
-
-    public int getLinkDown() {
-        return linkDown;
-    }
-
-    public void setLinkDown(int linkDown) {
-        this.linkDown = linkDown;
-    }
-
-    public int getLinkRight() {
-        return linkRight;
-    }
-
-    public void setLinkRight(int linkRight) {
-        this.linkRight = linkRight;
-    }
-
-    public int getLinkLeft() {
-        return linkLeft;
-    }
-
-    public void setLinkLeft(int linkLeft) {
-        this.linkLeft = linkLeft;
-    }
 }

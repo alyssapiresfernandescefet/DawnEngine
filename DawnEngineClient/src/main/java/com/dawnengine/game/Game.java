@@ -26,7 +26,7 @@ public class Game extends Canvas implements GameEvents {
     private final Input input;
     private Map map;
 
-    private static final HashMap<Integer, Entity> entities = new HashMap<>();
+    private final HashMap<Integer, Entity> entities = new HashMap<>();
 
     private LocalPlayer lp;
     private final AdministratorFrame adminFrame;
@@ -43,42 +43,25 @@ public class Game extends Canvas implements GameEvents {
         this.addFocusListener(input);
     }
 
-    public void start(JSONObject config) {
-        var arr = config.getJSONArray("entities");
-        for (int i = 0; i < arr.length(); i++) {
-            var obj = arr.getJSONObject(i);
-            var id = obj.getInt("id");
-            var position = new Vector2(obj.getFloat("posX"), obj.getFloat("posY"));
-            addEntity(new Entity(id, position));
-        }
+    public void start(JSONObject loginConfig) {
+        var mapIndex = loginConfig.getInt("mapIndex");
 
-        var req = new JSONObject().put("mapIndex", config.get("mapIndex"));
-        Client.getClient().sendPacket(NetworkPackets.CLIENT_CHECK_MAP_REQUEST,
-                req, NetworkPackets.SERVER_CHECK_MAP_RESPONSE, ctx -> {
-                    var res = ctx.response();
-                    var mapIndex = res.getInt("mapIndex");
-                    var serverLastRevision = res.getLong("lastRevision");
-
-                    var mapData = MapSerializer.load(mapIndex);
-
-                    if (mapData != null && mapData.getLastRevision() == serverLastRevision) {
-                        this.map = new Map(mapIndex, mapData);
-                        return;
-                    }
-
-                    var req2 = new JSONObject().put("mapIndex", mapIndex);
-                    Client.getClient().sendPacket(NetworkPackets.CLIENT_GET_MAP_REQUEST,
-                            req2, NetworkPackets.SERVER_GET_MAP_RESPONSE, ctx2 -> {
-                                onGetMapEvent(ctx2.response());
-                            });
-                });
-
-        lp = LocalPlayer.create(config.getInt("playerID"),
-                new Vector2(config.getFloat("posX"), config.getFloat("posY")));
-        addEntity(lp);
+        lp = LocalPlayer.create(loginConfig.getInt("playerID"),
+                new Vector2(loginConfig.getFloat("posX"), loginConfig.getFloat("posY")));
 
         this.createBufferStrategy(3);
         loop.start();
+        
+        var mapData = MapSerializer.load(mapIndex);
+
+        var req = new JSONObject()
+                .put("mapIndex", mapIndex);
+        
+        if (mapData != null) {
+            req.put("lastRevision", mapData.getLastRevision());
+        }
+        Client.getClient().sendPacket(NetworkPackets.CLIENT_GET_MAP_REQUEST, req);
+
         requestFocus();
     }
 
@@ -140,16 +123,36 @@ public class Game extends Canvas implements GameEvents {
         mainCamera.end();
     }
 
-    public void onGetMapEvent(JSONObject json) {
-        var index = json.getInt("mapIndex");
-        var mapData = new MapData(json.getString("name"), json.getInt("sizeX"),
-                json.getInt("sizeY"), json.getInt("moral"), json.getInt("lUp"),
-                json.getInt("lDown"), json.getInt("lRight"), json.getInt("lLeft"),
-                json.getLong("lastRevision"), json.getString("tiles"));
-        if (this.map == null || index == this.map.getIndex()) {
+    public void onGetMapEvent(JSONObject res) {
+        var index = res.getInt("mapIndex");
+        if (res.optBoolean("update")) {
+            var mapData = new MapData(res.getString("name"), res.getInt("sizeX"),
+                    res.getInt("sizeY"), res.getInt("moral"), res.getInt("lUp"),
+                    res.getInt("lDown"), res.getInt("lRight"), res.getInt("lLeft"),
+                    res.getLong("lastRevision"), res.getString("tiles"));
             this.map = new Map(index, mapData);
+            MapSerializer.save(index, mapData);
+        } else {
+            this.map = new Map(index, MapSerializer.load(index));
         }
-        MapSerializer.save(index, mapData);
+        
+        var posX = res.optFloat("newPosX");
+        var posY = res.optFloat("newPosY");
+        if (!Float.isNaN(posX) && !Float.isNaN(posY)) {
+            lp.transform().position(posX, posY);
+        }
+
+        var arr = res.optJSONArray("entities");
+        if (arr != null) {
+            entities.clear();
+            addEntity(lp);
+            for (int i = 0; i < arr.length(); i++) {
+                var obj = arr.getJSONObject(i);
+                var id = obj.getInt("id");
+                var position = new Vector2(obj.getFloat("posX"), obj.getFloat("posY"));
+                addEntity(new Entity(id, position));
+            }
+        }
     }
 
     public Map getMap() {
@@ -164,7 +167,7 @@ public class Game extends Canvas implements GameEvents {
         return mainCamera;
     }
 
-    public static boolean addEntity(Entity e) {
+    public boolean addEntity(Entity e) {
         if (e == null || entities.containsKey(e.id())) {
             return false;
         }
@@ -173,7 +176,7 @@ public class Game extends Canvas implements GameEvents {
         return true;
     }
 
-    public static boolean removeEntity(int id) {
+    public boolean removeEntity(int id) {
         var e = entities.remove(id);
         var notNull = e != null;
         if (notNull) {
@@ -182,7 +185,7 @@ public class Game extends Canvas implements GameEvents {
         return notNull;
     }
 
-    public static Entity findEntityByID(int id) {
+    public Entity findEntityByID(int id) {
         return entities.get(id);
     }
 

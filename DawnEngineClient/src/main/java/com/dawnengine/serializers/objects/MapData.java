@@ -1,6 +1,7 @@
 package com.dawnengine.serializers.objects;
 
 import com.dawnengine.game.map.Map;
+import com.dawnengine.game.map.MapLink;
 import java.io.Serializable;
 
 /**
@@ -8,7 +9,7 @@ import java.io.Serializable;
  * @author alyss
  */
 public class MapData implements Serializable {
-
+    
     private final String name;
     private final long lastRevision;
     private final int moral;
@@ -35,10 +36,10 @@ public class MapData implements Serializable {
         this.tileCountX = map.getTileCountX();
         this.tileCountY = map.getTileCountY();
         this.moral = map.getMoral().ordinal();
-        this.linkUp = map.getLinkUp();
-        this.linkDown = map.getLinkDown();
-        this.linkRight = map.getLinkRight();
-        this.linkLeft = map.getLinkLeft();
+        this.linkUp = map.getLink(MapLink.UP).getMapIndex();
+        this.linkDown = map.getLink(MapLink.DOWN).getMapIndex();
+        this.linkRight = map.getLink(MapLink.RIGHT).getMapIndex();
+        this.linkLeft = map.getLink(MapLink.LEFT).getMapIndex();
         this.tiles = map.getSerializedTiles();
     }
 

@@ -8,7 +8,8 @@ import java.util.Date;
  * @author alyss
  */
 public class MapData implements Serializable {
-
+    public static final int TILE_SIZE_X = 32, TILE_SIZE_Y = 32;
+    
     private String name;
     private long lastRevision;
     private int moral;

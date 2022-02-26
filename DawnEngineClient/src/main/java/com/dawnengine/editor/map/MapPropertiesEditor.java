@@ -2,6 +2,8 @@ package com.dawnengine.editor.map;
 
 import com.dawnengine.game.map.MapMoral;
 import com.dawnengine.game.map.Map;
+import com.dawnengine.game.map.MapLink;
+import com.dawnengine.math.Vector2;
 import java.awt.Dimension;
 
 public class MapPropertiesEditor extends javax.swing.JPanel {
@@ -16,10 +18,10 @@ public class MapPropertiesEditor extends javax.swing.JPanel {
         lblCurrentMap.setText("Current Map: " + map.getIndex());
         txtName.setText(map.getName());
         cmbMoral.setSelectedIndex(map.getMoral().ordinal());
-        txtLinkUp.setText(Integer.toString(map.getLinkUp()));
-        txtLinkBottom.setText(Integer.toString(map.getLinkDown()));
-        txtLinkRight.setText(Integer.toString(map.getLinkRight()));
-        txtLinkLeft.setText(Integer.toString(map.getLinkLeft()));
+        txtLinkUp.setText(Integer.toString(map.getLink(MapLink.UP).getMapIndex()));
+        txtLinkBottom.setText(Integer.toString(map.getLink(MapLink.DOWN).getMapIndex()));
+        txtLinkRight.setText(Integer.toString(map.getLink(MapLink.RIGHT).getMapIndex()));
+        txtLinkLeft.setText(Integer.toString(map.getLink(MapLink.LEFT).getMapIndex()));
         txtSizeX.setText(Integer.toString(map.getTileCountX()));
         txtSizeY.setText(Integer.toString(map.getTileCountY()));
     }

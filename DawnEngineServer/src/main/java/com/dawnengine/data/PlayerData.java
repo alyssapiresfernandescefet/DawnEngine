@@ -17,9 +17,8 @@ public class PlayerData implements Serializable {
         this.account = null;
     }
 
-    public PlayerData(int playerID, String username, String password) {
+    public PlayerData(String username, String password) {
         this.account = new Account(username, password);
-        this.id = playerID;
         mapIndex = 1;
         posX = posY = 0;
     }
@@ -28,7 +27,7 @@ public class PlayerData implements Serializable {
         return id;
     }
 
-    public void id(int id) {
+    public void setID(int id) {
         this.id = id;
     }
 

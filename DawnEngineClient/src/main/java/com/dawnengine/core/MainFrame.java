@@ -3,6 +3,7 @@ package com.dawnengine.core;
 import com.dawnengine.game.Game;
 import com.dawnengine.network.Client;
 import com.dawnengine.network.NetworkPackets;
+import com.esotericsoftware.minlog.Log;
 import java.awt.CardLayout;
 import java.io.IOException;
 import javax.swing.JOptionPane;
@@ -79,21 +80,22 @@ public class MainFrame extends javax.swing.JFrame {
 
         java.awt.EventQueue.invokeLater(() -> {
             MainFrame frame = new MainFrame();
-//            frame.setVisible(true);
-            Client client = Client.getClient();
-            try {
-                client.openConnection();
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(null, "Unable to connect to the server.");
-                System.exit(0);
-                return;
-            }
-            var req = new JSONObject().put("username", "asd")
-                    .put("password", "asd");
-            client.sendPacket(NetworkPackets.CLIENT_LOGIN_REQUEST, req,
-                    NetworkPackets.SERVER_LOGIN_RESPONSE, ctx -> {
-                        frame.onLoginComplete(ctx.response());
-                    });
+            frame.setVisible(true);
+            Log.set(Log.LEVEL_DEBUG);
+//            Client client = Client.getClient();
+//            try {
+//                client.openConnection();
+//            } catch (IOException ex) {
+//                JOptionPane.showMessageDialog(null, "Unable to connect to the server.");
+//                System.exit(0);
+//                return;
+//            }
+//            var req = new JSONObject().put("username", "asd")
+//                    .put("password", "asd");
+//            client.sendPacket(NetworkPackets.CLIENT_LOGIN_REQUEST, req,
+//                    NetworkPackets.SERVER_LOGIN_RESPONSE, ctx -> {
+//                        frame.onLoginComplete(ctx.response());
+//                    });
         });
     }
 

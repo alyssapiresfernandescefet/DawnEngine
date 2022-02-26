@@ -6,6 +6,7 @@ import com.dawnengine.game.Game;
 import com.dawnengine.game.Input;
 import com.dawnengine.game.graphics.StringRenderPosition;
 import com.dawnengine.game.map.Map;
+import com.dawnengine.game.map.MapLink;
 import com.dawnengine.game.map.Tile;
 import com.dawnengine.game.map.TileAttribute;
 import com.dawnengine.math.Vector2;
@@ -635,12 +636,12 @@ public class MapEditor extends Editor {
         if (result != JOptionPane.OK_OPTION) {
             return;
         }
-        
+
         map.setName(props.getMapName());
-        map.setLinkUp(props.getLinkUp());
-        map.setLinkDown(props.getLinkDown());
-        map.setLinkRight(props.getLinkRight());
-        map.setLinkLeft(props.getLinkLeft());
+        map.setLink(MapLink.UP, props.getLinkUp());
+        map.setLink(MapLink.DOWN, props.getLinkDown());
+        map.setLink(MapLink.RIGHT, props.getLinkRight());
+        map.setLink(MapLink.LEFT, props.getLinkLeft());
         map.setMoral(props.getMoral());
         map.setSize(props.getMapSize());
     }//GEN-LAST:event_btnPropertiesActionPerformed
