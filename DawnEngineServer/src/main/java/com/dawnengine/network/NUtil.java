@@ -5,13 +5,37 @@ import com.esotericsoftware.kryonet.Connection;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/**
- *
- * @author alyss
- */
-public class NetworkUtils {
+public class NUtil {
 
     public static final int DIR_UP = 0, DIR_DOWN = 1, DIR_RIGHT = 2, DIR_LEFT = 3;
+    
+    public static JSONObject getResponseObject(int responseCode, JSONObject request) {
+        JSONObject res = new JSONObject();
+        if (request.has("reqTime")) {
+            res.put("reqTime", request.getLong("reqTime"));
+        }
+        res.put("code", responseCode);
+        return res;
+    }
+    
+    public static JSONObject getEventObject(int responseCode) {
+        JSONObject res = new JSONObject();
+        res.put("code", responseCode);
+        return res;
+    }
+    
+    /**
+     * Concats the provided source with concat.
+     * @param source the source object to be concatenaded with.
+     * @param concat the object to concatenate.
+     * @return source
+     */
+    public static JSONObject concat(JSONObject source, JSONObject concat) {
+        for (String  name : JSONObject.getNames(concat)) {
+            source.put(name, concat.get(name));
+        }
+        return source;
+    }
 
     public static JSONArray getPlayerEntity(Connection con) {
         return getPlayerEntity(con.getID());

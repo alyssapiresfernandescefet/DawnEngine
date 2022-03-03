@@ -1,5 +1,7 @@
 package com.dawnengine.network;
 
+import com.dawnengine.network.events.MapEvents;
+import com.dawnengine.network.events.PlayerEvents;
 import java.util.function.Consumer;
 
 public class NetworkPackets {
@@ -18,22 +20,22 @@ public class NetworkPackets {
 
     public enum Client {
         CL_LOGIN_REQ(0xCFFFF001, ctx -> {
-            NetworkEvents.onClientLoginRequest(ctx);
+            PlayerEvents.onClientLoginRequest(ctx);
         }),
         CL_REGISTER_REQ(0xCFFFF002, ctx -> {
-            NetworkEvents.onClientRegisterRequest(ctx);
+            PlayerEvents.onClientRegisterRequest(ctx);
         }),
         CL_PLAYER_MOVE_EV(0xCFFFF003, ctx -> {
-            NetworkEvents.onPlayerMove(ctx);
+            PlayerEvents.onPlayerMove(ctx);
         }),
         CL_GET_MAP_REQ(0xCFFFF005, ctx -> {
-            NetworkEvents.onGetMap(ctx);
+            MapEvents.onGetMap(ctx);
         }),
         CL_UPDATE_MAP_REQ(0xCFFFF006, ctx -> {
-            NetworkEvents.onSaveMap(ctx);
+            MapEvents.onSaveMap(ctx);
         }),
         CL_PLAYER_MOVE_MAP_REQ(0xCFFFF007, ctx -> {
-            NetworkEvents.onPlayerMoveMap(ctx);
+            PlayerEvents.onPlayerMoveMap(ctx);
         }),;
 
         public final int code;

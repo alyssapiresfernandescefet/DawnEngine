@@ -65,8 +65,6 @@ public class MapEditor extends Editor {
     }
 
     public void save() {
-        dispose();
-
         var req = new JSONObject();
         var index = map.getIndex();
         var lastRevision = new Date().getTime();
@@ -84,6 +82,13 @@ public class MapEditor extends Editor {
         req.put("mapIndex", index);
         req.put("lastRevision", lastRevision);
 
+        if (req.toString().getBytes().length > Client.MAX_NETWORK_BANDWIDTH) {
+            JOptionPane.showMessageDialog(this, "Map is too big!",
+                    "Bandwidth Overflow", JOptionPane.ERROR_MESSAGE);
+            cancel();
+            return;
+        }
+
         JOptionPane pane = new JOptionPane("Loading...",
                 JOptionPane.INFORMATION_MESSAGE);
 
@@ -94,22 +99,21 @@ public class MapEditor extends Editor {
         dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         dialog.pack();
         dialog.setLocationRelativeTo(null);
-        dialog.setAlwaysOnTop(true);
+        Client.getClient().sendPacket(NetworkPackets.CL_UPDATE_MAP_REQ, req, ctx -> {
+            var res = ctx.response();
+            var accept = res.getBoolean("accept");
+            if (!accept) {
+                var message = res.getString("message");
+                JOptionPane.showMessageDialog(null,
+                        "The operation could not be performed. Reason: " + message,
+                        "Update Map Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            MapSerializer.save(index, mapData);
+            dialog.dispose();
+        });
+        dispose();
         dialog.setVisible(true);
-        Client.getClient().sendPacket(NetworkPackets.CLIENT_UPDATE_MAP_REQUEST, req,
-                NetworkPackets.SERVER_UPDATE_MAP_RESPONSE, ctx -> {
-                    var res = ctx.response();
-                    var accept = res.getBoolean("accept");
-                    if (!accept) {
-                        var message = res.getString("message");
-                        JOptionPane.showMessageDialog(null,
-                                "The operation could not be performed. Reason: " + message,
-                                "Update Map Error", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                    MapSerializer.save(index, mapData);
-                    dialog.dispose();
-                });
     }
 
     public void cancel() {

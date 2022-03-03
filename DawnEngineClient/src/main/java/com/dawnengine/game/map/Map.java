@@ -46,16 +46,29 @@ public class Map {
         this.tiles = new Tile[Tile.LAYERS_NUM][size];
         this.attributes = new TileAttribute[size];
 
+        if (map.getTiles().isEmpty()) {
+            var width = tileCountX * Tile.SIZE_X;
+            var height = tileCountY * Tile.SIZE_Y;
+            backgroundTilemap = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            foregroundTilemap = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            return;
+        }
+
         String[] serializedTiles = map.getTiles().split("_");
         var tilesetsMap = new HashMap<Integer, Tileset>(1);
 
         for (int i = 0; i < serializedTiles.length; i++) {
             var split = serializedTiles[i].split("x");
+
             var layerIndex = Integer.parseInt(split[0]);
             var mapIndex = Integer.parseInt(split[1]);
 
             var tilesetNum = Integer.parseInt(split[2]);
             var tileIndex = Integer.parseInt(split[3]);
+
+            if (tilesetNum < 1 || tileIndex < 0) {
+                continue;
+            }
 
             if (split.length > 4) {
                 var attrIndex = Integer.parseInt(split[4]);
@@ -67,6 +80,7 @@ public class Map {
                 tileset = TilesetLoader.load(tilesetNum);
                 tilesetsMap.put(tilesetNum, tileset);
             }
+
             this.tiles[layerIndex][mapIndex] = new Tile(tileset, tileIndex);
         }
 
@@ -152,7 +166,7 @@ public class Map {
         } else if (y < 0) {
             return links[MapLink.UP];
         }
-        
+
         x /= Tile.SIZE_X;
         y /= Tile.SIZE_Y;
 
@@ -198,7 +212,11 @@ public class Map {
                 }
             }
         }
-        return str.substring(0, str.length() - 1);
+        var newLength = str.length() - 1;
+        if (newLength < 0) {
+            return str;
+        }
+        return str.substring(0, newLength);
     }
 
     public String getName() {

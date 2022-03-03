@@ -2,8 +2,8 @@ package com.dawnengine.core;
 
 import com.dawnengine.data.PlayerData;
 import com.dawnengine.network.NetworkContext;
-import com.dawnengine.network.NetworkEvents;
 import com.dawnengine.network.NetworkPackets;
+import com.dawnengine.network.events.PlayerEvents;
 import com.dawnengine.utils.Utils;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
@@ -14,6 +14,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class Server extends Listener {
+
     private com.esotericsoftware.kryonet.Server socket;
 
     private final HashMap<Integer, PlayerData> players = new HashMap<>();
@@ -26,9 +27,10 @@ public class Server extends Listener {
 
     @Override
     public void disconnected(Connection connection) {
-        PlayerData e = players.remove(connection.getID());
-        if (e != null) {
-            NetworkEvents.onPlayerDisconnect(e, this);
+        PlayerData pd = players.remove(connection.getID());
+        if (pd != null) {
+            PlayerEvents.onPlayerDisconnect(
+                    new NetworkContext(connection, null, this), pd);
         }
     }
 
@@ -100,7 +102,7 @@ public class Server extends Listener {
     public PlayerData getPlayer(int id) {
         return players.get(id);
     }
-    
+
     public PlayerData getPlayer(String username) {
         for (PlayerData pd : players.values()) {
             if (pd.getAccount().username.equals(username)) {

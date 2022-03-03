@@ -58,16 +58,8 @@ public class LocalPlayer extends NetworkEntity {
         if (Input.getKeyDown(KeyEvent.VK_C)) {
             transform().position(new Vector2(0, 0));
         }
-        var map = Game.get().getMap();
-        if (map != null) {
-            var worldSize = map.getWorldSize();
-            var pos = new Vector2(transform().position());
-            var gw = GameFrame.GAME_WIDTH * 0.5f;
-            var gh = GameFrame.GAME_HEIGHT * 0.5f;
-            pos.x = Mathf.clamp(pos.x, gw, worldSize.width - gw);
-            pos.y = Mathf.clamp(pos.y, gh, worldSize.height - gh);
-            Game.get().getMainCamera().follow(pos);
-        }
+
+        cameraFollow();
     }
 
     private void setGoal(int dx, int dy) {
@@ -101,7 +93,7 @@ public class LocalPlayer extends NetworkEntity {
                 .put("posX", desirableGoal.x)
                 .put("posY", desirableGoal.y)
                 .put("speed", speed);
-        invalidate(NetworkPackets.CLIENT_PLAYER_MOVE, req);
+        invalidate(NetworkPackets.CL_PLAYER_MOVE_EV, req);
 
         moveTo(desirableGoal, speed);
     }
@@ -111,6 +103,19 @@ public class LocalPlayer extends NetworkEntity {
                 .put("mapIndex", link.getMapIndex())
                 .put("dir", link.getDirection());
         invalidate(NetworkPackets.CL_PLAYER_MOVE_MAP_REQ, req);
+    }
+
+    private void cameraFollow() {
+        var map = Game.get().getMap();
+        if (map != null) {
+            var worldSize = map.getWorldSize();
+            var pos = new Vector2(transform().position());
+            float gw = GameFrame.GAME_WIDTH * 0.5f;
+            float gh = GameFrame.GAME_HEIGHT * 0.5f;
+            pos.x = Mathf.clamp(pos.x, gw, worldSize.width - gw);
+            pos.y = Mathf.clamp(pos.y, gh, worldSize.height - gh);
+            Game.get().getMainCamera().follow(pos);
+        }
     }
 
 }

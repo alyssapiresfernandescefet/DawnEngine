@@ -51,16 +51,13 @@ public class Game extends Canvas implements GameEvents {
 
         this.createBufferStrategy(3);
         loop.start();
-        
-        var mapData = MapSerializer.load(mapIndex);
 
-        var req = new JSONObject()
-                .put("mapIndex", mapIndex);
-        
+        var req = new JSONObject().put("mapIndex", mapIndex);
+        var mapData = MapSerializer.load(mapIndex);
         if (mapData != null) {
             req.put("lastRevision", mapData.getLastRevision());
         }
-        Client.getClient().sendPacket(NetworkPackets.CLIENT_GET_MAP_REQUEST, req);
+        Client.getClient().sendPacket(NetworkPackets.CL_GET_MAP_REQ, req);
 
         requestFocus();
     }

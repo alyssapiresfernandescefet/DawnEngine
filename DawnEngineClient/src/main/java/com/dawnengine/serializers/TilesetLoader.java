@@ -33,12 +33,12 @@ public class TilesetLoader {
             }
         });
 
-        Tileset tileset = new Tileset(num,
-                new BufferedImage(Tile.SIZE_X, Tile.SIZE_Y, BufferedImage.TYPE_INT_RGB));
         if (tilesets.length == 0) {
-            return tileset;
+            return new Tileset(num, new BufferedImage(Tile.SIZE_X, Tile.SIZE_Y, 
+                    BufferedImage.TYPE_INT_RGB));
         }
-
+        
+        Tileset tileset = null;
         try {
             tileset = new Tileset(num, ImageIO.read(tilesets[0]));
         } catch (IOException ex) {

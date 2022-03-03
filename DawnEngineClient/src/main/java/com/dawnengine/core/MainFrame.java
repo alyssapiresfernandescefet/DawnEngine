@@ -31,6 +31,8 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void onLoginComplete(JSONObject json) {
         if (!json.getBoolean("accept")) {
+            pswRegisterPassword.setText("");
+            pswRegisterConfirmPassword.setText("");
             JOptionPane.showMessageDialog(this, json.getString("reason"));
             return;
         }
@@ -39,25 +41,6 @@ public class MainFrame extends javax.swing.JFrame {
         var frame = new GameFrame();
         frame.setVisible(true);
         Game.get().start(json);
-    }
-
-    private void onRegisterComplete(boolean accept, String reason) {
-        if (!accept) {
-            pswRegisterPassword.setText("");
-            pswRegisterConfirmPassword.setText("");
-            JOptionPane.showMessageDialog(this, reason);
-            return;
-        }
-
-        String username = txtLoginUsername.getText();
-        String password = new String(pswLoginPassword.getPassword());
-
-        var req = new JSONObject().put("username", username)
-                .put("password", password);
-        Client.getClient().sendPacket(NetworkPackets.CLIENT_LOGIN_REQUEST, req,
-                NetworkPackets.SERVER_LOGIN_RESPONSE, ctx -> {
-                    onLoginComplete(ctx.response());
-                });
     }
 
     public static void main(String[] args) {
@@ -490,10 +473,9 @@ public class MainFrame extends javax.swing.JFrame {
         }
         var req = new JSONObject().put("username", username)
                 .put("password", password);
-        client.sendPacket(NetworkPackets.CLIENT_LOGIN_REQUEST, req,
-                NetworkPackets.SERVER_LOGIN_RESPONSE, ctx -> {
-                    onLoginComplete(ctx.response());
-                });
+        client.sendPacket(NetworkPackets.CL_LOGIN_REQ, req, ctx -> {
+            onLoginComplete(ctx.response());
+        });
     }//GEN-LAST:event_lblLoginEnterMouseClicked
 
     private void lblRegisterMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegisterMouseClicked
@@ -524,9 +506,8 @@ public class MainFrame extends javax.swing.JFrame {
 
         var req = new JSONObject().put("username", username)
                 .put("password", password);
-        client.sendPacket(NetworkPackets.CLIENT_REGISTER_REQUEST, req, NetworkPackets.SERVER_REGISTER_RESPONSE, ctx -> {
-            var json = ctx.response();
-            onRegisterComplete(json.getBoolean("accept"), json.optString("reason"));
+        client.sendPacket(NetworkPackets.CL_REGISTER_REQ, req, ctx -> {
+            onLoginComplete(ctx.response());
         });
     }//GEN-LAST:event_lblRegisterMouseClicked
 

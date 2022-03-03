@@ -27,13 +27,11 @@ public class NetworkEntity extends Entity {
         queuedPackets.put(code, new Request(code, request));
     }
 
-    public void invalidate(int code, JSONObject request, int intendedResponse,
-            Consumer<NetworkContext> onResponse) {
+    public void invalidate(int code, JSONObject request, Consumer<NetworkContext> onResponse) {
         if (!request.has("code")) {
             request.put("code", code);
         }
-        queuedPackets.put(code, new Request(code, request,
-                intendedResponse, onResponse));
+        queuedPackets.put(code, new Request(code, request, onResponse));
     }
 
     @Override
@@ -41,14 +39,12 @@ public class NetworkEntity extends Entity {
         if (queuedPackets.isEmpty()) {
             return;
         }
-        
+
         JSONArray arr = new JSONArray();
         for (Request req : queuedPackets.values()) {
-            if (req.intendedResponse > 0) {
-                Client.getClient().sendPacket(req.requestCode, req.data, 
-                        req.intendedResponse, req.onResponse);
-            }
-            else {
+            if (req.onResponse != null) {
+                Client.getClient().sendPacket(req.requestCode, req.data, req.onResponse);
+            } else {
                 arr.put(req.data);
             }
         }
@@ -60,21 +56,18 @@ public class NetworkEntity extends Entity {
 
         public final int requestCode;
         public final JSONObject data;
-        public final int intendedResponse;
         public final Consumer<NetworkContext> onResponse;
 
         public Request(int requestCode, JSONObject data) {
             this.requestCode = requestCode;
             this.data = data;
-            this.intendedResponse = 0;
             this.onResponse = null;
         }
 
-        public Request(int requestCode, JSONObject data, int intendedResponse,
+        public Request(int requestCode, JSONObject data,
                 Consumer<NetworkContext> onResponse) {
             this.requestCode = requestCode;
             this.data = data;
-            this.intendedResponse = intendedResponse;
             this.onResponse = onResponse;
         }
     }

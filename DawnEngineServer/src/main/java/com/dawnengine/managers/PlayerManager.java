@@ -69,6 +69,6 @@ public class PlayerManager {
             }
         });
         
-        return users.length == 1;
+        return users.length > 0;
     }
 }

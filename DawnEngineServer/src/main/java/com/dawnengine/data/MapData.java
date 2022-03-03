@@ -2,14 +2,16 @@ package com.dawnengine.data;
 
 import java.io.Serializable;
 import java.util.Date;
+import org.json.JSONObject;
 
 /**
  *
  * @author alyss
  */
 public class MapData implements Serializable {
+
     public static final int TILE_SIZE_X = 32, TILE_SIZE_Y = 32;
-    
+
     private String name;
     private long lastRevision;
     private int moral;
@@ -28,9 +30,9 @@ public class MapData implements Serializable {
         this.tiles = "";
         var length = tileCountX * tileCountY;
         for (int i = 0; i < length - 1; i++) {
-            this.tiles += "0x" + i + "x1x1_";
+            this.tiles += "0x" + i + "x0x0_";
         }
-        tiles += "0x" + (length - 1) + "x1x1";
+        tiles += "0x" + (length - 1) + "x0x0";
     }
 
     public MapData(String name, int tileCountX, int tileCountY, long lastRevision,
@@ -126,6 +128,19 @@ public class MapData implements Serializable {
 
     public void setTiles(String tiles) {
         this.tiles = tiles;
+    }
+
+    public JSONObject toJSON() {
+        return new JSONObject().put("name", getName())
+                .put("lastRevision", lastRevision)
+                .put("moral", moral)
+                .put("lUp", linkUp)
+                .put("lDown", linkDown)
+                .put("lRight", linkRight)
+                .put("lLeft", linkLeft)
+                .put("sizeX", tileCountX)
+                .put("sizeY", tileCountY)
+                .put("tiles", tiles);
     }
 
 }

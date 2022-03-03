@@ -4,16 +4,16 @@ import java.util.function.Consumer;
 
 public final class NetworkPackets {
 
-    public static final int CLIENT_LOGIN_REQUEST = 0xCFFFF001;
-    public static final int CLIENT_REGISTER_REQUEST = 0xCFFFF002;
-    public static final int CLIENT_PLAYER_MOVE = 0xCFFFF003;
-    public static final int CLIENT_GET_MAP_REQUEST = 0xCFFFF005;
-    public static final int CLIENT_UPDATE_MAP_REQUEST = 0xCFFFF006;
+    public static final int CL_LOGIN_REQ = 0xCFFFF001;
+    public static final int CL_REGISTER_REQ = 0xCFFFF002;
+    public static final int CL_PLAYER_MOVE_EV = 0xCFFFF003;
+    public static final int CL_GET_MAP_REQ = 0xCFFFF005;
+    public static final int CL_UPDATE_MAP_REQ = 0xCFFFF006;
     public static final int CL_PLAYER_MOVE_MAP_REQ = 0xCFFFF007;
 
-    public static final int SERVER_LOGIN_RESPONSE = 0xFFFFF001;
-    public static final int SERVER_REGISTER_RESPONSE = 0xFFFFF002;
-    public static final int SERVER_UPDATE_MAP_RESPONSE = 0xFFFFF005;
+    public static final int SV_LOGIN_RES = 0xFFFFF001;
+    public static final int SV_REGISTER_RES = 0xFFFFF002;
+    public static final int SV_UPDATE_MAP_RES = 0xFFFFF005;
     public static final int SV_PLAYER_MOVE_MAP_RES = 0xFFFFF006;
 
     public static enum ServerEvents {
@@ -45,7 +45,7 @@ public final class NetworkPackets {
                     return value;
                 }
             }
-            throw new IllegalArgumentException(Integer.toString(code));
+            return null;
         }
     }
 

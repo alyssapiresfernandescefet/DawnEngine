@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,7 +17,9 @@ import org.json.JSONObject;
 
 public class Client extends Listener {
 
-    private final HashMap<ScheduledResponseHandler, Consumer<NetworkContext>> awaitingResponses = new HashMap<>();
+    public static final int MAX_NETWORK_BANDWIDTH = 65536;
+
+    private final HashMap<Long, Consumer<NetworkContext>> awaitingResponses = new HashMap<>();
     private static Client client;
 
     static {
@@ -28,7 +29,8 @@ public class Client extends Listener {
     private com.esotericsoftware.kryonet.Client socket;
 
     private Client() {
-        socket = new com.esotericsoftware.kryonet.Client(65536, 65536);
+        socket = new com.esotericsoftware.kryonet.Client(MAX_NETWORK_BANDWIDTH,
+                MAX_NETWORK_BANDWIDTH);
         socket.addListener(this);
         socket.start();
     }
@@ -80,11 +82,12 @@ public class Client extends Listener {
         if (requestTime == 0) {
             //It is an event.
             var packet = ServerEvents.get(code);
-            packet.event.accept(ctx);
+            if (packet != null) {
+                packet.event.accept(ctx);
+            }
         } else {
             //It is responding to a request.
-            awaitingResponses.remove(new ScheduledResponseHandler(
-                    requestTime, code)).accept(ctx);
+            awaitingResponses.remove(requestTime).accept(ctx);
         }
     }
 
@@ -103,63 +106,21 @@ public class Client extends Listener {
         sendSerialized(obj.toString());
     }
 
-    public void sendPacket(int code, JSONObject obj,
-            int intendedResponse, Consumer<NetworkContext> onResponse) {
-        long time = new Date().getTime();
+    public void sendPacket(int code, JSONObject obj, Consumer<NetworkContext> onResponse) {
+        long requestTime = new Date().getTime();
 
-        var scheduled = new ScheduledResponseHandler(time, intendedResponse);
-        awaitingResponses.put(scheduled, onResponse);
-        obj.put("reqTime", time);
+        awaitingResponses.put(requestTime, onResponse);
 
-        var collectorThread = new Thread(() -> {
+        obj.put("reqTime", requestTime);
+        sendPacket(code, obj);
+
+        new Thread(() -> {
             try {
                 Thread.sleep(10000);
             } catch (InterruptedException ex) {
                 Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
             }
-            awaitingResponses.remove(scheduled, onResponse);
-        }, "Schedule GC for " + time);
-        sendPacket(code, obj);
-        collectorThread.start();
-    }
-
-    private class ScheduledResponseHandler {
-
-        public final long requestTime;
-        public final int intendedResponse;
-
-        public ScheduledResponseHandler(long requestTime, int intendedResponse) {
-            this.requestTime = requestTime;
-            this.intendedResponse = intendedResponse;
-        }
-
-        @Override
-        public int hashCode() {
-            int hash = 5;
-            hash = 41 * hash + (int) (this.requestTime ^ (this.requestTime >>> 32));
-            hash = 41 * hash + Objects.hashCode(this.intendedResponse);
-            return hash;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            final ScheduledResponseHandler other = (ScheduledResponseHandler) obj;
-            if (this.requestTime != other.requestTime) {
-                return false;
-            }
-            if (this.intendedResponse != other.intendedResponse) {
-                return false;
-            }
-            return true;
-        }
+            awaitingResponses.remove(requestTime, onResponse);
+        }, "Schedule GC for " + requestTime).start();
     }
 }
