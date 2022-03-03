@@ -1,7 +1,7 @@
 package com.dawnengine.network;
 
 import com.dawnengine.core.Settings;
-import com.dawnengine.network.NetworkPackets.ServerEvents;
+import com.dawnengine.network.NetworkPackets.ServerEventsMap;
 import com.dawnengine.utils.Utils;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
@@ -81,7 +81,7 @@ public class Client extends Listener {
         var requestTime = serverData.optLong("reqTime");
         if (requestTime == 0) {
             //It is an event.
-            var packet = ServerEvents.get(code);
+            var packet = ServerEventsMap.get(code);
             if (packet != null) {
                 packet.event.accept(ctx);
             }
