@@ -99,7 +99,7 @@ public class MapEditor extends Editor {
         dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         dialog.pack();
         dialog.setLocationRelativeTo(null);
-        Client.getClient().sendPacket(NetworkPackets.CL_UPDATE_MAP_REQ, req, ctx -> {
+        Client.get().sendPacket(NetworkPackets.CL_UPDATE_MAP_REQ, req, ctx -> {
             var res = ctx.response();
             var accept = res.getBoolean("accept");
             if (!accept) {

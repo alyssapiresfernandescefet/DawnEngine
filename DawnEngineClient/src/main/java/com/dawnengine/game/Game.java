@@ -4,6 +4,7 @@ import com.dawnengine.game.graphics.StringRenderPosition;
 import com.dawnengine.game.graphics.Camera;
 import com.dawnengine.editor.AdministratorFrame;
 import com.dawnengine.entity.Entity;
+import com.dawnengine.entity.NetworkEntity;
 import com.dawnengine.entity.Player;
 import com.dawnengine.game.map.Map;
 import com.dawnengine.serializers.MapSerializer;
@@ -18,7 +19,7 @@ import org.json.JSONObject;
 
 public class Game extends Canvas implements GameEvents {
 
-    private static Game instance;
+    private static final Game instance = new Game();
 
     private final GameLoop loop;
     private final Camera mainCamera;
@@ -27,17 +28,19 @@ public class Game extends Canvas implements GameEvents {
     private Map map;
 
     private final HashMap<Integer, Entity> entities = new HashMap<>();
+    private final HashMap<Integer, NetworkEntity> networkEntities = new HashMap<>(1);
 
     private Player player;
+
     private final AdministratorFrame adminFrame;
 
-    private Game() {
+    public Game() {
         loop = new GameLoop(this);
         mainCamera = new Camera(this);
         cameraManager = new CameraManager(mainCamera);
         adminFrame = new AdministratorFrame(this);
 
-        input = Input.getInstance(mainCamera);
+        input = Input.createInstance(mainCamera);
         this.addKeyListener(input);
         this.addMouseMotionListener(input);
         this.addMouseListener(input);
@@ -59,7 +62,7 @@ public class Game extends Canvas implements GameEvents {
         if (mapData != null) {
             req.put("lastRevision", mapData.getLastRevision());
         }
-        Client.getClient().sendPacket(NetworkPackets.CL_GET_MAP_EV_TR, req);
+        Client.get().sendPacket(NetworkPackets.CL_GET_MAP_EV_TR, req);
 
         requestFocus();
     }
@@ -93,7 +96,7 @@ public class Game extends Canvas implements GameEvents {
 
     @Override
     public void onNetworkUpdate() {
-        for (Entity entity : entities.values()) {
+        for (NetworkEntity entity : networkEntities.values()) {
             entity.networkUpdate();
         }
     }
@@ -144,6 +147,9 @@ public class Game extends Canvas implements GameEvents {
         }
         entities.put(e.id(), e);
         e.start();
+        if (e instanceof NetworkEntity ne) {
+            networkEntities.put(ne.id(), ne);
+        }
         return true;
     }
 
@@ -153,11 +159,15 @@ public class Game extends Canvas implements GameEvents {
         if (notNull) {
             e.onDestroy();
         }
+        if (e instanceof NetworkEntity) {
+            networkEntities.remove(id);
+        }
         return notNull;
     }
 
     public void clearEntities() {
         entities.clear();
+        networkEntities.clear();
     }
 
     public Entity findEntityByID(int id) {
@@ -165,10 +175,6 @@ public class Game extends Canvas implements GameEvents {
     }
 
     public static Game get() {
-        if (Game.instance == null) {
-            Game.instance = new Game();
-        }
         return Game.instance;
     }
-
 }

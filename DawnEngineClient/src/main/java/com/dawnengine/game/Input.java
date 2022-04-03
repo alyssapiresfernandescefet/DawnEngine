@@ -34,7 +34,7 @@ public class Input implements KeyListener, MouseListener, FocusListener,
     private Input() {
     }
 
-    public static Input getInstance(Camera gameCamera) {
+    public static Input createInstance(Camera gameCamera) {
         if (Input.mainCamera != null) {
             throw new ExceptionInInitializerError("There is already an active input.");
         }

@@ -2,12 +2,13 @@ package com.dawnengine.entity;
 
 import com.dawnengine.math.Vector2;
 import java.awt.Image;
+import java.awt.image.BufferedImage;
 
-public class Entity implements Sprite {
+public class Entity {
 
     private final int id;
     private Transform transform;
-    private Image sprite;
+    private BufferedImage sprite;
 
     private boolean moving = false;
     private Vector2 goal;
@@ -31,24 +32,12 @@ public class Entity implements Sprite {
         return transform;
     }
 
-    @Override
-    public Image sprite() {
+    public BufferedImage sprite() {
         return sprite;
     }
 
-    @Override
-    public void sprite(Image image) {
+    public void sprite(BufferedImage image) {
         this.sprite = image;
-    }
-
-    @Override
-    public int getWidth() {
-        return sprite.getWidth(null);
-    }
-
-    @Override
-    public int getHeight() {
-        return sprite.getHeight(null);
     }
 
     public void start() {
@@ -56,18 +45,14 @@ public class Entity implements Sprite {
 
     public void update(double dt) {
         if (moving) {
-            if (Vector2.distance(transform().position(), goal) < 2) {
+            if (Vector2.distance(transform().position(), goal) < 1) {
                 transform().position(goal);
                 moving = false;
-            } else {
-                alpha += dt * speed;
-                Vector2.lerp(transform().position(), goal, alpha);
+                return;
             }
+            alpha += dt * speed;
+            Vector2.lerp(transform().position(), goal, alpha);
         }
-    }
-
-    public void networkUpdate() {
-
     }
 
     public void onDestroy() {

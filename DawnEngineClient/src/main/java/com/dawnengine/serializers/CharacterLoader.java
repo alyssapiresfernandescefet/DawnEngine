@@ -3,7 +3,6 @@ package com.dawnengine.serializers;
 import java.io.File;
 import java.io.FilenameFilter;
 import com.dawnengine.game.graphics.Character;
-import com.dawnengine.game.map.Tileset;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.logging.Level;

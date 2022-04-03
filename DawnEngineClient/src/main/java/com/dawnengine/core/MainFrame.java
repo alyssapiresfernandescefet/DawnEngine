@@ -65,7 +65,7 @@ public class MainFrame extends javax.swing.JFrame {
             MainFrame frame = new MainFrame();
 //            frame.setVisible(true);
             Log.set(Log.LEVEL_DEBUG);
-            Client client = Client.getClient();
+            Client client = Client.get();
             try {
                 client.openConnection();
             } catch (IOException ex) {
@@ -83,7 +83,7 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     private void exit() {
-        Client.getClient().closeConnection();
+        Client.get().closeConnection();
         dispose();
     }
 
@@ -464,7 +464,7 @@ public class MainFrame extends javax.swing.JFrame {
         Settings.setProperty("user.password", savePassword ? password : "");
         Settings.setProperty("user.savepassword", Boolean.toString(savePassword));
 
-        Client client = Client.getClient();
+        Client client = Client.get();
         try {
             client.openConnection();
         } catch (IOException ex) {
@@ -495,7 +495,7 @@ public class MainFrame extends javax.swing.JFrame {
             return;
         }
 
-        Client client = Client.getClient();
+        Client client = Client.get();
 
         try {
             client.openConnection();

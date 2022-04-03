@@ -20,11 +20,7 @@ public class Client extends Listener {
     public static final int MAX_NETWORK_BANDWIDTH = 65536;
 
     private final HashMap<Long, Consumer<NetworkContext>> awaitingResponses = new HashMap<>();
-    private static Client client;
-
-    static {
-        client = new Client();
-    }
+    private static final Client client = new Client();
 
     private com.esotericsoftware.kryonet.Client socket;
 
@@ -35,7 +31,7 @@ public class Client extends Listener {
         socket.start();
     }
 
-    public static Client getClient() {
+    public static Client get() {
         return client;
     }
 

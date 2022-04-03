@@ -34,7 +34,6 @@ public class NetworkEntity extends Entity {
         queuedPackets.put(code, new Request(code, request, onResponse));
     }
 
-    @Override
     public void networkUpdate() {
         if (queuedPackets.isEmpty()) {
             return;
@@ -43,13 +42,13 @@ public class NetworkEntity extends Entity {
         JSONArray arr = new JSONArray();
         for (Request req : queuedPackets.values()) {
             if (req.onResponse != null) {
-                Client.getClient().sendPacket(req.requestCode, req.data, req.onResponse);
+                Client.get().sendPacket(req.requestCode, req.data, req.onResponse);
             } else {
                 arr.put(req.data);
             }
         }
         queuedPackets.clear();
-        Client.getClient().sendSerialized(arr.toString());
+        Client.get().sendSerialized(arr.toString());
     }
 
     private class Request {

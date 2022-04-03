@@ -46,7 +46,23 @@ public class Vector2 implements Serializable {
         final float y_d = target.y - origin.y;
         return (float) Math.sqrt(x_d * x_d + y_d * y_d);
     }
-
+    
+    public static Vector2 add(Vector2 a, Vector2 b) {
+        return new Vector2(a.x + b.x, a.y + b.y);
+    }
+    
+    public static Vector2 add(Vector2 a, float bx, float by) {
+        return new Vector2(a.x + bx, a.y + by);
+    }
+    
+    public static Vector2 subtract(Vector2 a, Vector2 b) {
+        return new Vector2(a.x - b.x, a.y - b.y);
+    }
+    
+    public static Vector2 subtract(Vector2 a, float bx, float by) {
+        return new Vector2(a.x - bx, a.y - by);
+    }
+    
     public Vector2() {
         this(0, 0);
     }

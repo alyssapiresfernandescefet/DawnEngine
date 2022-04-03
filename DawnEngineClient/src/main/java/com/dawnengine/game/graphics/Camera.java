@@ -179,25 +179,20 @@ public class Camera {
         if (entity.sprite() == null) {
             Color old = g.getColor();
             g.setColor(Color.MAGENTA);
-
-            var sizeX = Tile.SIZE_X;
-            var sizeY = Tile.SIZE_Y;
-
-            var pos = new Vector2(entity.transform().position());
-            pos.x -= sizeX / 2;
-            pos.y -= sizeY / 2;
-            fillRect(pos, new Vector2(sizeX, sizeY),
+            fillRect(Vector2.subtract(entity.transform().position(), 
+                    Tile.SIZE_X / 2, Tile.SIZE_Y / 2),
+                    new Vector2(Tile.SIZE_X, Tile.SIZE_Y),
                     entity.transform().rotation(), entity.transform().scale());
             g.setColor(old);
             return;
         }
         Transform trans = entity.transform();
         g.setTransform(new AffineTransform(transform));
-        g.translate(trans.position().x + entity.getWidth() / 2,
-                trans.position().y + entity.getHeight() / 2);
+        g.translate(trans.position().x + entity.sprite().getWidth() / 2,
+                trans.position().y + entity.sprite().getHeight() / 2);
         g.rotate(Math.toRadians(trans.rotation()));
         g.scale(trans.scale().x, trans.scale().y);
-        g.translate(-(entity.getWidth() / 2), -(entity.getHeight() / 2));
+        g.translate(-(entity.sprite().getWidth() / 2), -(entity.sprite().getHeight() / 2));
         g.drawImage(entity.sprite(), 0, 0, null);
         g.setTransform(transform);
     }

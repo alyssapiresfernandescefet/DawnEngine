@@ -35,7 +35,7 @@ public class GameFrame extends JFrame {
 //        if (opt == JOptionPane.NO_OPTION) {
 //            return;
 //        }
-        Client.getClient().closeConnection();
+        Client.get().closeConnection();
         game.stop();
         super.dispose();
     }
